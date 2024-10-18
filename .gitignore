@@ -1,2 +1,6 @@
 *.onnx
+*.onnx_data
 *.whl
+*.zip
+*.blend1
+models/*

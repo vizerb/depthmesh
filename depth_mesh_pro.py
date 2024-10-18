@@ -52,7 +52,7 @@ class DMPPanel(bpy.types.Panel):
         layout = self.layout
         
         if global_vars.MODULES_INSTALLED == None:
-            global_vars.MODULES_INSTALLED = utils.are_modules_installed()
+            global_vars.MODULES_INSTALLED = True#utils.are_modules_installed()
         
         
         dp_path = layout.row()
@@ -105,119 +105,73 @@ class DepthPredict(bpy.types.Operator):
     bl_options = {'UNDO'}
     
     timer = None
-    future_depth = None
+    future_output = None
     input_filepath = None
     input_image = None
     depth = None
+    focal_length = None
     
     time_elapsed = 0
     
     duration_estimate = 0
     
-    def geoNodesSetup(self, obj, depth_image, aspect_ratio):
-        import numpy as np
+    def applyGeoAndMaterial(self, obj, depth_image, image_size):
+        model_dir = os.path.dirname(__file__)
+        blend_file = os.path.join(model_dir, "nodes.blend")
         
-        geo = obj.modifiers.new("",type='NODES')
-        bpy.ops.node.new_geometry_node_group_assign()
+        inner_path = "NodeTree"
+        object_name = "displace"
+        
+        bpy.ops.wm.append(
+            filepath=os.path.join(blend_file,inner_path,object_name), #str(blend_file / inner_path / object_name),
+            directory=os.path.join(blend_file,inner_path),#str(blend_file / inner_path),
+            filename=object_name
+        )
+        
+        
+        # Load the texture image
+        texture_image = bpy.data.images.load(self.input_filepath)
+        # Use the latest appended material
+        # Find the latest "DMPMaterial" node group by checking for the highest numbered suffix
+        materials = [ng for ng in bpy.data.materials if ng.name.startswith("DMPMaterial")]
+        material = max(materials, key=lambda ng: int(ng.name.split(".")[-1]) if "." in ng.name else 0)
 
-        # Getting nodes
-        input_node = geo.node_group.nodes.get("Group Input")
-        subdiv_node = geo.node_group.nodes.new("GeometryNodeSubdivideMesh")
-        setpos_node = geo.node_group.nodes.new("GeometryNodeSetPosition")
-        uvmap_node = geo.node_group.nodes.new("GeometryNodeInputNamedAttribute")
-        uvsubtract_node = geo.node_group.nodes.new("ShaderNodeVectorMath")
-        uvmul_node = geo.node_group.nodes.new("ShaderNodeVectorMath")
-        uvadd_node = geo.node_group.nodes.new("ShaderNodeVectorMath")
-        imgtex_node = geo.node_group.nodes.new("GeometryNodeImageTexture")
-        pos_node = geo.node_group.nodes.new("GeometryNodeInputPosition")
-        sep_node = geo.node_group.nodes.new("ShaderNodeSeparateXYZ")
-        div_focal_node = geo.node_group.nodes.new("ShaderNodeMath")
-        div_xf_node = geo.node_group.nodes.new("ShaderNodeMath")
-        div_yf_node = geo.node_group.nodes.new("ShaderNodeMath")
-        mul_xz_node = geo.node_group.nodes.new("ShaderNodeMath")
-        mul_yz_node = geo.node_group.nodes.new("ShaderNodeMath")
-        negate_z_node = geo.node_group.nodes.new("ShaderNodeMath")
-        com_node = geo.node_group.nodes.new("ShaderNodeCombineXYZ")
-        transform_node = geo.node_group.nodes.new("GeometryNodeTransform")
-        output_node = geo.node_group.nodes.get("Group Output")
+        # Create an image texture node
+        tex_image = material.node_tree.nodes.get('Image Texture')
+        tex_image.image = texture_image
+        # Assign the material to the object to easily access it later (geo nodes assign is where it really gets assigned)
+        obj.data.materials.append(material)
         
         
-        # Setting node values
-        imgtex_node.inputs[0].default_value = depth_image
         
-        uvmap_node.data_type = 'FLOAT_VECTOR'
-        uvmap_node.inputs["Name"].default_value = "UVMap"
+        # Find the latest "displace" node group by checking for the highest numbered suffix
+        displace_nodes = [ng for ng in bpy.data.node_groups if ng.name.startswith("displace")]
+        latest_displace_node = max(displace_nodes, key=lambda ng: int(ng.name.split(".")[-1]) if "." in ng.name else 0)
 
-        # Fix for edge depth values not being correct
-        uvsubtract_node.operation = 'SUBTRACT'
-        uvmul_node.operation = 'MULTIPLY'
-        uvadd_node.operation = 'ADD'
-        uvsubtract_node.inputs[1].default_value = (0.5,0.5,0)
-        uvmul_node.inputs[1].default_value = (0.998,0.998,0)
-        uvadd_node.inputs[1].default_value = (0.5,0.5,0)
+        # Use the latest "displace" node group
+        node_tree = latest_displace_node
+        #node_tree = bpy.data.node_groups["displace"]
         
-        div_focal_node.operation = 'DIVIDE'
-        div_focal_node.inputs[1].default_value = 18.0
-        div_xf_node.operation = 'DIVIDE'
-        div_yf_node.operation = 'DIVIDE'
-        mul_xz_node.operation = 'MULTIPLY'
-        mul_yz_node.operation = 'MULTIPLY'
-        negate_z_node.operation = 'MULTIPLY'
-        negate_z_node.inputs[1].default_value = -1.0
-        transform_node.inputs[2].default_value[0] = 90/180*np.pi
-        transform_node.inputs[3].default_value[1] = 1.0/aspect_ratio
-
+        geo = obj.modifiers.new(name="GeometryNodes", type='NODES')
+        geo.node_group = node_tree
         
-        # Creating group inputs
-        if (bpy.app.version >= (4,0,0)):
-            geo.node_group.interface.new_socket(name="Focal length", in_out='INPUT',socket_type="NodeSocketFloat")
-            id = geo.node_group.interface.items_tree["Focal length"].identifier
-            geo[id] = 30.0
-            geo.node_group.interface.new_socket(name="Resolution", in_out='INPUT',socket_type="NodeSocketInt")
-            id = geo.node_group.interface.items_tree["Resolution"].identifier
-            geo[id] = 8
-        else:
-            geo.node_group.inputs.new("NodeSocketFloat","Focal length")
-            geo["Input_2"] = 30.0
-            geo.node_group.inputs.new("NodeSocketInt","Resolution")
-            geo["Input_3"] = 8
+        for node in node_tree.nodes:
+            print(node.name)
         
+        input_node = node_tree.nodes.get("Group Input")
+        depth_node = node_tree.nodes.get("DepthMap")
+        width_node = node_tree.nodes.get("Width")
+        height_node = node_tree.nodes.get("Height")
+        #focal_length_node = node_tree.nodes.get("FocalLength")
+        mat_node = node_tree.nodes.get("Set Material")
         
-        # Node links
-        geo.node_group.links.new(input_node.outputs["Geometry"],subdiv_node.inputs['Mesh'])
-        geo.node_group.links.new(input_node.outputs["Resolution"],subdiv_node.inputs['Level'])
-        geo.node_group.links.new(input_node.outputs["Focal length"],div_focal_node.inputs[0])
-        
-        geo.node_group.links.new(uvmap_node.outputs[0],uvsubtract_node.inputs[0])
-        geo.node_group.links.new(uvsubtract_node.outputs[0],uvmul_node.inputs[0])
-        geo.node_group.links.new(uvmul_node.outputs[0],uvadd_node.inputs[0])
-        geo.node_group.links.new(uvadd_node.outputs[0],imgtex_node.inputs['Vector'])
-        
-        geo.node_group.links.new(pos_node.outputs[0],sep_node.inputs[0])
-        
-        geo.node_group.links.new(sep_node.outputs[0],div_xf_node.inputs[0])
-        geo.node_group.links.new(div_focal_node.outputs[0],div_xf_node.inputs[1])
-        geo.node_group.links.new(sep_node.outputs[1],div_yf_node.inputs[0])
-        geo.node_group.links.new(div_focal_node.outputs[0],div_yf_node.inputs[1])
-        
-        geo.node_group.links.new(div_xf_node.outputs[0],mul_xz_node.inputs[0])
-        geo.node_group.links.new(imgtex_node.outputs[0],mul_xz_node.inputs[1])
-        geo.node_group.links.new(div_yf_node.outputs[0],mul_yz_node.inputs[0])
-        geo.node_group.links.new(imgtex_node.outputs[0],mul_yz_node.inputs[1])
-        
-        geo.node_group.links.new(imgtex_node.outputs[0], negate_z_node.inputs[0])
-        
-        geo.node_group.links.new(mul_xz_node.outputs[0], com_node.inputs[0])
-        geo.node_group.links.new(mul_yz_node.outputs[0], com_node.inputs[1])
-        geo.node_group.links.new(negate_z_node.outputs[0], com_node.inputs[2])
-        
-        geo.node_group.links.new(subdiv_node.outputs["Mesh"],setpos_node.inputs['Geometry'])
-        geo.node_group.links.new(com_node.outputs[0], setpos_node.inputs["Position"])
-        
-        geo.node_group.links.new(setpos_node.outputs['Geometry'], transform_node.inputs['Geometry'])
-        
-        geo.node_group.links.new(transform_node.outputs['Geometry'],output_node.inputs['Geometry'])
-    
+        input_node.outputs["Focal Length"].default_value = int(self.focal_length)
+        depth_node.inputs[0].default_value = depth_image
+        width_node.outputs[0].default_value = image_size[0]
+        height_node.outputs[0].default_value = image_size[1]
+        #focal_length_node.outputs[0].default_value = self.focal_length
+        mat_node.inputs[2].default_value = material
+            
     
     def invoke(self, context, event):
         wm = context.window_manager
@@ -232,7 +186,7 @@ class DepthPredict(bpy.types.Operator):
         
         # First inference
         if (global_vars.count == 0):
-            utils.ensure_modules()
+            #utils.ensure_modules()
             inference.loadModel()
 
         cpu_mflops = utils.get_cpu_mflops()
@@ -249,15 +203,15 @@ class DepthPredict(bpy.types.Operator):
         self.input_image = cv2.imread(self.input_filepath)
 
         # Inference
-        self.future_depth = future.Future()
+        self.future_output = future.Future()
         def async_inference():
             try:
-                depth = inference.infer(self.input_image)
-                self.future_depth.add_response(depth)
+                output = inference.infer(self.input_image)
+                self.future_output.add_response(output)
             except Exception as e:
-                self.future_depth.set_exception(e)
+                self.future_output.set_exception(e)
             finally:
-                self.future_depth.set_done()
+                self.future_output.set_done()
         # Run the async task in a separate thread
         threading.Thread(target=async_inference).start()
 
@@ -276,11 +230,11 @@ class DepthPredict(bpy.types.Operator):
                 for area in w.screen.areas:
                     area.tag_redraw()
                     
-            if self.future_depth.done:
+            if self.future_output.done:
                 try:
                     props = context.scene.DMPprops
                     props.inference_progress = 100
-                    self.depth = self.future_depth.result()
+                    self.depth,self.focal_length = self.future_output.result()
                     self.report({'INFO'}, f"Inference done")
                     self.makeMesh(context)
                     props.inference_progress = 0
@@ -298,7 +252,7 @@ class DepthPredict(bpy.types.Operator):
         
         original_width, original_height = self.input_image.shape[1],self.input_image.shape[0]
         out_width, out_height = int(self.depth.shape[1]), int(self.depth.shape[0])
-        aspect_ratio = original_width / original_height
+        #aspect_ratio = original_width / original_height
 
         
         # Add plane
@@ -316,24 +270,10 @@ class DepthPredict(bpy.types.Operator):
         depth_image.pack()
         
         
-        # Geo nodes setup
-        self.geoNodesSetup(obj, depth_image, aspect_ratio)
         
+        self.applyGeoAndMaterial(obj, depth_image, (original_width, original_height))
 
-        # Load the texture image
-        texture_image = bpy.data.images.load(self.input_filepath)
-        # Create a new material
-        material = bpy.data.materials.new(name="Material")
-        material.use_nodes = True
-        bsdf = material.node_tree.nodes["Principled BSDF"]
-        # Create an image texture node
-        tex_image = material.node_tree.nodes.new('ShaderNodeTexImage')
-        tex_image.image = texture_image
-        # Connect the image texture node to the base color of the Principled BSDF
-        material.node_tree.links.new(bsdf.inputs['Base Color'], tex_image.outputs['Color'])
-        bsdf.inputs["Roughness"].default_value = 0.95
-        # Assign the material to the object
-        obj.data.materials.append(material)
+        
 
         global_vars.count += 1
         self.report({'INFO'}, "Depth mesh generation complete")

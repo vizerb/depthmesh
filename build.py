@@ -3,16 +3,16 @@
 import subprocess
 import sys
 
-def build_wheel_command(modules, os_type):
+def build_wheel_command(modules, os_type, python_version="3.11"):
     cmd = "pip download "
 
     for module in modules:
         cmd += module + " "
 
-    cmd += " --dest ./wheels --only-binary=:all: --python-version=3.11"
+    cmd += f" --dest ./wheels --only-binary=:all: --python-version={python_version}"
     
     if os_type == "linux":
-        cmd += " --platform manylinux2014_x86_64"
+        cmd += ""#" --platform manylinux_2_17_x86_64"
     elif os_type == "windows":
         cmd += " --platform win_amd64"
     else:
@@ -33,10 +33,23 @@ def build_zip_command(excluded_dirs, excluded_patterns):
 
     return cmd
 
-###
-### Downloading wheels for the specified modules
-###
+def build_model_command():
+    cmd = "wget -O model.onnx -nc https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_fp16.onnx?download=true"
+    return cmd
 
+def try_call(cmd, stage):
+    print(f"\n\n{stage}\n\n")
+    ret = subprocess.run(cmd, shell=True)
+    print (ret.returncode)
+    if ret.returncode == 1:
+        print("Model already downloaded, skipping")
+    elif ret.returncode != 0:
+        print(f"Error {stage}")
+        sys.exit(1)
+
+###
+### Download wheels for the specified modules
+###
 # MODULES
 modules = [
     "numpy",
@@ -45,16 +58,34 @@ modules = [
     "psutil",
 ]
 
-# OS TYPE
-OS_TYPE = "linux"  # linux, mac, windows (mac not supported yet)
+# BOTH LINUX AND WINDOWS ARE DOWNLOADED THIS IS JUST OLD CODE
+# # Select the OS_TYPE
+# OS_TYPE = "linux"  # linux, mac, windows (mac not supported yet)
+# if len(sys.argv) > 1:
+#     OS_TYPE = sys.argv[1]
+# else:
+#     OS_TYPE = "linux"  # Default to linux if no argument is provided
+
+cmd = "rm -rf wheels dm.zip"
+try_call(cmd, "Deleting old wheels")
+
+# Select the python version
+python_version = "3.11"  # the version blender(4.2) uses
 if len(sys.argv) > 1:
-    OS_TYPE = sys.argv[1]
-else:
-    OS_TYPE = "linux"  # Default to linux if no argument is provided
+    python_version = sys.argv[1]
 
-cmd = build_wheel_command(modules, OS_TYPE)
+cmd_linux = build_wheel_command(modules, "linux", python_version)
+cmd_win = build_wheel_command(modules, "windows", python_version)
 
-subprocess.run(cmd, shell=True)
+try_call(cmd_linux, "Downloading linux wheels")
+try_call(cmd_win, "Downloading windows wheels")
+
+###
+### Download the model
+###
+cmd = build_model_command()
+
+try_call(cmd, "Downloading model")
 
 ###
 ### Zip the addon
@@ -64,4 +95,6 @@ excluded_patterns = ["*.zip", "*.blend1", "*.sh", ".*", "build.py"]
 
 cmd = build_zip_command(excluded_dirs, excluded_patterns)
 
-subprocess.run(cmd, shell=True)
+try_call(cmd, "Zipping files")
+
+print("\n\nDone\n\n")

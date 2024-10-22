@@ -2,7 +2,9 @@
 
 import subprocess
 import sys
-from glob import glob
+import glob
+import zipfile
+import os
 
 def build_wheel_command(modules, os_type, python_version="3.11"):
     cmd = "pip download "
@@ -21,6 +23,7 @@ def build_wheel_command(modules, os_type, python_version="3.11"):
 
     return cmd
 
+# This requires 7zip to be installed so its not used for now
 def build_zip_command(excluded_dirs, excluded_patterns):
     cmd = "7za u -mx=0 -mmt=on dm.zip ./*"
 
@@ -33,6 +36,17 @@ def build_zip_command(excluded_dirs, excluded_patterns):
         cmd += f" -xr'!./{dir}'"
 
     return cmd
+
+def zip_directory(zip_name, excluded_dirs, excluded_patterns):
+    with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_STORED) as zipf:
+        for root, dirs, files in os.walk('.'):
+            # Exclude directories
+            dirs[:] = [d for d in dirs if d not in excluded_dirs]
+            for file in files:
+                file_path = os.path.join(root, file)
+                # Exclude patterns
+                if not any(glob.fnmatch.fnmatch(file, pattern) for pattern in excluded_patterns):
+                    zipf.write(file_path, os.path.relpath(file_path, '.'))
 
 def build_model_command():
     cmd = "wget -O model.onnx -nc https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_fp16.onnx?download=true"
@@ -85,7 +99,7 @@ try_call(cmd_win, "Downloading windows wheels")
 ###
 ### Write the wheel locations to the blender manifest file
 ###
-wheels = glob("wheels/*.whl")
+wheels = glob.glob("wheels/*.whl")
 with open("blender_manifest.toml", "r") as f:
     content = f.read()
 
@@ -110,10 +124,17 @@ try_call(cmd, "Downloading model")
 ### Zip the addon
 ###
 excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git"]
-excluded_patterns = ["*.zip", "*.blend1", "*.sh", ".*", "build.py"]
+excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]
 
-cmd = build_zip_command(excluded_dirs, excluded_patterns)
+zip_name = "dm.zip"
+USE_7ZIP = False
 
-try_call(cmd, "Zipping files")
+if USE_7ZIP:
+    cmd = build_zip_command(excluded_dirs, excluded_patterns)
+    try_call(cmd, "Zipping files")
+else:
+    zip_directory(zip_name, excluded_dirs, excluded_patterns)
+
+
 
 print("\n\nDone\n\n")

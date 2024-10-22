@@ -27,7 +27,7 @@ before_script:
 build:
   stage: build
   script:
-    - python build.py skip_model
+    - python build.py #skip_model
   artifacts:
     name: depthmesh
     expose_as: "Build Output"

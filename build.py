@@ -62,6 +62,16 @@ def try_call(cmd, stage):
         print(f"Error {stage}")
         sys.exit(1)
 
+
+SKIP_MODEL = False  # Skip downloading the model file (its too large for ci)
+PYTHON_VERSION = "3.11"  # the version blender(4.2) uses
+for arg in sys.argv:
+    if arg.startswith("py="):
+        PYTHON_VERSION = arg.split("=")[1]
+        break
+    elif arg == "skip_model":
+        SKIP_MODEL = True
+
 ###
 ### Download wheels for the specified modules
 ###
@@ -84,13 +94,9 @@ modules = [
 cmd = "rm -rf wheels dm.zip"
 try_call(cmd, "Deleting old wheels")
 
-# Select the python version
-python_version = "3.11"  # the version blender(4.2) uses
-if len(sys.argv) > 1:
-    python_version = sys.argv[1]
 
-cmd_linux = build_wheel_command(modules, "linux", python_version)
-cmd_win = build_wheel_command(modules, "windows", python_version)
+cmd_linux = build_wheel_command(modules, "linux", PYTHON_VERSION)
+cmd_win = build_wheel_command(modules, "windows", PYTHON_VERSION)
 
 try_call(cmd_linux, "Downloading linux wheels")
 try_call(cmd_win, "Downloading windows wheels")
@@ -114,11 +120,11 @@ with open("blender_manifest.toml", "w") as f:
     f.write(content)
 
 ###
-### Download the model
+### Download the model if not skipped
 ###
-cmd = build_model_command()
-
-try_call(cmd, "Downloading model")
+if not SKIP_MODEL:
+    cmd = build_model_command()
+    try_call(cmd, "Downloading model")
 
 ###
 ### Zip the addon

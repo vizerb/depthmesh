@@ -2,6 +2,7 @@
 
 import subprocess
 import sys
+from glob import glob
 
 def build_wheel_command(modules, os_type, python_version="3.11"):
     cmd = "pip download "
@@ -79,6 +80,24 @@ cmd_win = build_wheel_command(modules, "windows", python_version)
 
 try_call(cmd_linux, "Downloading linux wheels")
 try_call(cmd_win, "Downloading windows wheels")
+
+
+###
+### Write the wheel locations to the blender manifest file
+###
+wheels = glob("wheels/*.whl")
+with open("blender_manifest.toml", "r") as f:
+    content = f.read()
+
+start = content.find("wheels = [") + len("wheels = [")
+end = content.find("]", start)
+wheels_str = "\n"
+for wheel in wheels:
+    wheels_str += f'\t"{wheel}",\n'
+content = content[:start] + wheels_str + content[end:]
+
+with open("blender_manifest.toml", "w") as f:
+    f.write(content)
 
 ###
 ### Download the model

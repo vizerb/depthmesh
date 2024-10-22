@@ -27,7 +27,7 @@ before_script:
 build:
   stage: build
   script:
-    - python build.py
+    - python build.py skip_model
   artifacts:
     paths:
       - dm.zip

@@ -22,6 +22,7 @@ jobs:
         run: |
           python --version
           pip --version
+          ls -la
 
       # Uncomment if virtual environment setup is needed
       # - name: Set up Python Environment

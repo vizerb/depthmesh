@@ -1,0 +1,5 @@
+name: Build
+run-name: Build
+on: [push]
+
+jobs:

@@ -37,9 +37,10 @@ jobs:
 
       # Upload build artifacts
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: depthmesh
           path: ./dm.zip
+          compression-level: 0
           retention-days: 1  # Artifacts expire in 1 day (24 hours)
 

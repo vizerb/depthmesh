@@ -33,16 +33,17 @@ jobs:
 
       # Run the build script
       - name: Run Build Script
-        run: python build.py skip_model
+        run: python build.py 
+      #skip_model
 
-      - name: Archive ZIP in Uncompressed TAR
-        run: tar -cvf dm.tar dm.zip
+      #- name: Archive ZIP in Uncompressed TAR
+      #  run: tar -cvf dm.tar dm.zip
 
       # Upload build artifacts
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: depthmesh
-          path: ./dm.tar
+          path: ./dm.zip
           retention-days: 1  # Artifacts expire in 1 day (24 hours)
 

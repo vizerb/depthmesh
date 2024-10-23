@@ -1,5 +1,44 @@
-name: Build
-run-name: Build
-on: [push]
+name: Build Depthmesh
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the main branch (adjust as needed)
+  pull_request:
+    branches:
+      - main  # Trigger on pull requests to the main branch (adjust as needed)
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository
+      #- name: Checkout Code
+      #  uses: actions/checkout@v3
+
+      # Display Python and Pip versions (for debugging)
+      - name: Check Python and Pip Versions
+        run: |
+          python --version
+          pip --version
+
+      # Uncomment if virtual environment setup is needed
+      # - name: Set up Python Environment
+      #   run: |
+      #     pip install virtualenv
+      #     virtualenv venv
+      #     source venv/bin/activate
+
+      # Run the build script
+      - name: Run Build Script
+        run: python build.py skip_model
+
+      # Upload build artifacts
+      #- name: Upload Artifacts
+      #  uses: actions/upload-artifact@v3
+      #  with:
+      #    name: depthmesh
+      #    path: ./dm.zip
+      #    # retention-days: 1  # Artifacts expire in 1 day (24 hours)
+

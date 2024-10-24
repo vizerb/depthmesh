@@ -41,7 +41,7 @@ jobs:
 
       # Upload build artifacts
       - name: Upload Artifacts
-        uses: ChristopherHX/gitea-upload-artifact
+        uses: ChristopherHX/gitea-upload-artifact@main
         with:
           name: depthmesh
           path: ./dm.zip

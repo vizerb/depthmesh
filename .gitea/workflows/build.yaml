@@ -41,9 +41,10 @@ jobs:
 
       # Upload build artifacts
       - name: Upload Artifacts
-        uses: actions/upload-artifactasd@81f940d004763f986ba3582c007fd842dd5cb0d7
+        uses: ChristopherHX/gitea-upload-artifact
         with:
           name: depthmesh
           path: ./dm.zip
+          compression-level: 0
           retention-days: 1  # Artifacts expire in 1 day (24 hours)
 

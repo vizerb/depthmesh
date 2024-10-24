@@ -33,7 +33,7 @@ jobs:
 
       # Run the build script
       - name: Run Build Script
-        run: python build.py
+        run: python build.py skip_model
 
       #- name: Archive ZIP in Uncompressed TAR
       #  run: tar -cvf dm.tar dm.zip
@@ -43,7 +43,7 @@ jobs:
         uses: ChristopherHX/gitea-upload-artifact@v4
         with:
           name: dmm
-          path: model.onnx
+          path: __init__.py
           compression-level: 0
           retention-days: 1  # Artifacts expire in 1 day (24 hours)
         #continue-on-error: true

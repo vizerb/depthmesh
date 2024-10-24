@@ -41,7 +41,7 @@ jobs:
 
       # Upload build artifacts
       - name: Upload Artifacts
-        uses: actions/upload-artifact@81f940d004763f986ba3582c007fd842dd5cb0d7
+        uses: actions/upload-artifactasd@81f940d004763f986ba3582c007fd842dd5cb0d7
         with:
           name: depthmesh
           path: ./dm.zip

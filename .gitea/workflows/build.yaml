@@ -33,8 +33,7 @@ jobs:
 
       # Run the build script
       - name: Run Build Script
-        run: python build.py 
-      #skip_model
+        run: python build.py skip_model
 
       #- name: Archive ZIP in Uncompressed TAR
       #  run: tar -cvf dm.tar dm.zip

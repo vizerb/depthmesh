@@ -42,7 +42,7 @@ jobs:
       - name: Upload Artifacts
         uses: ChristopherHX/gitea-upload-artifact@v4
         with:
-          name: dm
+          name: asdawda
           path: wheels/
           compression-level: 0
           retention-days: 1  # Artifacts expire in 1 day (24 hours)

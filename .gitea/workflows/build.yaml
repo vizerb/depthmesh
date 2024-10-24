@@ -33,17 +33,18 @@ jobs:
 
       # Run the build script
       - name: Run Build Script
-        run: python build.py skip_model
+        run: python build.py
 
       #- name: Archive ZIP in Uncompressed TAR
       #  run: tar -cvf dm.tar dm.zip
 
       # Upload build artifacts
       - name: Upload Artifacts
-        uses: ChristopherHX/gitea-upload-artifact@v4
+        #uses: ChristopherHX/gitea-upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: dmm
-          path: __init__.py
+          name: dm
+          path: dm.zip
           compression-level: 0
           retention-days: 1  # Artifacts expire in 1 day (24 hours)
         #continue-on-error: true

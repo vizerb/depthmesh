@@ -1,12 +1,20 @@
 name: Build Depthmesh
 
+# on:
+#   push:
+#     branches:
+#       - main  # Trigger on pushes to the main branch (adjust as needed)
+#   pull_request:
+#     branches:
+#       - main  # Trigger on pull requests to the main branch (adjust as needed)
 on:
-  push:
-    branches:
-      - main  # Trigger on pushes to the main branch (adjust as needed)
-  pull_request:
-    branches:
-      - main  # Trigger on pull requests to the main branch (adjust as needed)
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Name of the deployment environment'
+        required: true
+        default: 'production'
+
 
 jobs:
   build:

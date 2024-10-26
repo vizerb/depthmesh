@@ -106,7 +106,7 @@ try_call(cmd_win, "Downloading windows wheels")
 ### Write the wheel locations to the blender manifest file
 ###
 wheels = glob.glob("wheels/*.whl")
-with open("blender_manifest.toml", "r") as f:
+with open("blender_manifest_base.toml", "r") as f:
     content = f.read()
 
 start = content.find("wheels = [") + len("wheels = [")

@@ -26,7 +26,7 @@ class Inference():
         import onnxruntime as ort
         import os
         
-        model_file_name = "model_fp16.onnx"
+        model_file_name = "model.onnx"
 
         self.input_size = (1536, 1536)  # [H, W]
         

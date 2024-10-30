@@ -21,21 +21,21 @@ class DMPPropertyGroup(bpy.types.PropertyGroup):
         description="Path for input image",
         default=bpy.path.abspath(""),
         maxlen=1024,
-        )
+    ) # type: ignore
     download_progress: bpy.props.FloatProperty(
         name="Progress",
         subtype="PERCENTAGE",
         default=0,
         soft_min=0, 
         soft_max=100, 
-    )
+    ) # type: ignore
     inference_progress: bpy.props.FloatProperty(
         name="Progress",
         subtype="PERCENTAGE",
         default=0,
         soft_min=0, 
         soft_max=100, 
-    )
+    ) # type: ignore
 
 
 class DMPPanel(bpy.types.Panel):

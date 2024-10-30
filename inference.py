@@ -6,14 +6,22 @@ import numpy as np
 
 def preprocess_image(input_image, input_size):
     import cv2
+    image_mean=[0.5, 0.5, 0.5]
+    image_std=[0.5, 0.5, 0.5]
+    
     image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
     
     image = cv2.resize(image, input_size)  # Resize to the model's expected input size
     print(image.shape)
     image = np.array(image).astype('float32')
+    image /= 255.0  # Normalize to [0, 1]
+    image = (image - image_mean) / image_std
+
     image = np.transpose(image, (2, 0, 1))  # Change data layout from HWC to CHW
     image = np.expand_dims(image, axis=0)  # Add batch dimension
-    image /= 255.0  # Normalize to [0, 1]
+
+    image = np.array(image).astype('float32')
+
     return image
 
 

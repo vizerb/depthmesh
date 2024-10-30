@@ -5,4 +5,5 @@
 *.blend1
 models/*
 *.save
-blender_manifest.toml #Made from the base manifest and changes from build to build
+#Made from the base manifest and changes from build to build thats why its ignored
+blender_manifest.toml 

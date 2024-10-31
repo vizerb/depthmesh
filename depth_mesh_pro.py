@@ -155,17 +155,24 @@ class DepthPredict(bpy.types.Operator):
         geo = obj.modifiers.new(name="GeometryNodes", type='NODES')
         geo.node_group = node_tree
         
-        for node in node_tree.nodes:
-            print(node.name)
+        #print(geo)
+        geo["Socket_7"] = int(self.focal_length)
+        #print(geo["Socket_7"])
         
-        input_node = node_tree.nodes.get("Group Input")
+        # for node in node_tree.nodes:
+        #     print(node.name)
+        
+        #input_node = node_tree.nodes.get("Group Input")
         depth_node = node_tree.nodes.get("DepthMap")
         width_node = node_tree.nodes.get("Width")
         height_node = node_tree.nodes.get("Height")
         #focal_length_node = node_tree.nodes.get("FocalLength")
         mat_node = node_tree.nodes.get("Set Material")
         
-        input_node.outputs["Focal Length"].default_value = int(self.focal_length)
+        #for op in input_node.outputs:
+        #    print(op, end=", ")
+        #input_node.outputs["Focal Length"].default_value = int(self.focal_length)
+        #print(f"focal length = {self.focal_length}")
         depth_node.inputs[0].default_value = depth_image
         width_node.outputs[0].default_value = image_size[0]
         height_node.outputs[0].default_value = image_size[1]

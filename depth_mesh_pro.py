@@ -115,65 +115,68 @@ class DepthPredict(bpy.types.Operator):
     
     duration_estimate = 0
     
-    def applyGeoAndMaterial(self, obj, depth_image, image_size):
+    # Appends the selected object from the extensions nodes.blend file
+    def appendToScene(self, inner_path, object_name):
         model_dir = os.path.dirname(__file__)
         blend_file = os.path.join(model_dir, "nodes.blend")
         
-        inner_path = "NodeTree"
-        object_name = "displace"
-        
+        # This appends the geonodes group and also the material because the node group uses it
         bpy.ops.wm.append(
             filepath=os.path.join(blend_file,inner_path,object_name), #str(blend_file / inner_path / object_name),
             directory=os.path.join(blend_file,inner_path),#str(blend_file / inner_path),
             filename=object_name
         )
+    
+    def applyGeoAndMaterial(self, obj, depth_image, image_size):
+        node_tree = bpy.data.node_groups.get("DMPprojectmesh")
+        if not node_tree:
+            self.appendToScene("NodeTree", "DMPprojectmesh")
+            node_tree = bpy.data.node_groups.get("DMPprojectmesh")
+            if not node_tree:
+                raise Exception("Couldn't append the geonodes tree from nodes.blend")
+
         
+        material = bpy.data.materials.get("DMPMaterial")
+        if not material:
+            self.appendToScene("Material", "DMPMaterial")
+            material = bpy.data.materials.get("DMPMaterial")
+            if not material:
+                raise Exception("Couldn't append the material from nodes.blend")
         
-        # Load the texture image
+        # Load the image texture
         texture_image = bpy.data.images.load(self.input_filepath)
-        # Use the latest appended material
-        # Find the latest "DMPMaterial" node group by checking for the highest numbered suffix
-        materials = [ng for ng in bpy.data.materials if ng.name.startswith("DMPMaterial")]
-        material = max(materials, key=lambda ng: int(ng.name.split(".")[-1]) if "." in ng.name else 0)
+        
+        # # Get the appended material and copy it so that the original is available for the next usage
+        # original_material = bpy.data.materials["DMPMaterial"]
+        # original_material.use_fake_user = True  # Set fake user to keep the material in the file
+        # material = original_material.copy()
+        # Rename it so it doesn't collide with the next one
+        filename = os.path.basename(self.input_filepath).split(".")[0]
+        material.name = filename
 
         # Create an image texture node
         tex_image = material.node_tree.nodes.get('Image Texture')
         tex_image.image = texture_image
-        # Assign the material to the object to easily access it later (geo nodes assign is where it really gets assigned)
-        obj.data.materials.append(material)
-
-
-        # Get the displace node group that was just appended
-        node_tree = bpy.data.node_groups.get("displace")
+        # Assign the material to the object for the user to easily access it later (geo nodes assignment is where it actually gets assigned)
+        obj.data.materials.append(material)        
         
-        # Rename it so it doesn't interfere with the next one
-        node_tree.name = os.path.basename(self.input_filepath).split(".")[0]
-        #node_tree.name = f"displace.{global_vars.count}"
         
         geo = obj.modifiers.new(name="GeometryNodes", type='NODES')
         geo.node_group = node_tree
         
-        #print(geo)
+        # The focal length input socket
         geo["Socket_7"] = int(self.focal_length)
-        #print(geo["Socket_7"])
         
-        # for node in node_tree.nodes:
-        #     print(node.name)
+        # DepthMap
+        geo["Socket_14"] = depth_image
+        # Width
+        geo["Socket_15"] = image_size[0]
+        # Height
+        geo["Socket_16"] = image_size[1]
+        # Material
+        geo["Socket_17"] = material
         
-        #input_node = node_tree.nodes.get("Group Input")
-        depth_node = node_tree.nodes.get("DepthMap")
-        width_node = node_tree.nodes.get("Width")
-        height_node = node_tree.nodes.get("Height")
-        #focal_length_node = node_tree.nodes.get("FocalLength")
-        mat_node = node_tree.nodes.get("Set Material")
-        
-        
-        depth_node.inputs[0].default_value = depth_image
-        width_node.outputs[0].default_value = image_size[0]
-        height_node.outputs[0].default_value = image_size[1]
-        #focal_length_node.outputs[0].default_value = self.focal_length
-        mat_node.inputs[2].default_value = material
-            
+    
     
     def invoke(self, context, event):
         wm = context.window_manager

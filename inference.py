@@ -57,9 +57,10 @@ class Inference():
             'CPUExecutionProvider',
         ]
         
+        # Only log errors
+        ort.set_default_logger_severity(3)
         sess_options = ort.SessionOptions()
         self.ort_session = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
-        #print("Model loaded")
         
     def infer(self, input_image):
         onnx_input = preprocess_image(input_image, self.input_size)

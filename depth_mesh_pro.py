@@ -79,6 +79,13 @@ class DepthPredict(bpy.types.Operator):
     
     duration_estimate = 0
     
+    
+    def finished(self, context):
+        global running
+        running = False
+        if self.timer is not None:
+            context.window_manager.event_timer_remove(self.timer)
+    
     # Appends the selected object from the extensions nodes.blend file
     def appendToScene(self, inner_path, object_name):
         model_dir = os.path.dirname(__file__)
@@ -143,11 +150,14 @@ class DepthPredict(bpy.types.Operator):
     
     
     def invoke(self, context, event):
+        if not self.execute(context):
+            return {'CANCELLED'}
+        
         wm = context.window_manager
         self.timer = wm.event_timer_add(0.05, window=context.window)
         wm.modal_handler_add(self)
         
-        return self.execute(context)
+        return {'RUNNING_MODAL'}
     
     
     def execute(self, context):
@@ -159,19 +169,31 @@ class DepthPredict(bpy.types.Operator):
         #     inference.loadModel()
         inference.loadModel()
 
-
         cpu_mflops = utils.get_cpu_mflops()
         self.duration_estimate = global_vars.model_mflops / cpu_mflops
         
-        import cv2
         
+        import cv2
         # Getting input property
         self.input_filepath = props.inputPath
         if (self.input_filepath == ""):
-            raise Exception("You did not select an input image")
+            self.report({'ERROR'}, "You did not select an input image")
+            return False
         self.input_filepath = bpy.path.abspath(self.input_filepath)
+        
+        if not os.path.isfile(self.input_filepath):
+            self.report({'ERROR'}, "Selected file does not exist")
+            self.finished(context)
+            return False
+        
         # Loading image to numpy array
         self.input_image = cv2.imread(self.input_filepath)
+        # Failed to load image
+        if self.input_image is None:
+            self.report({'ERROR'}, "Failed to load image")
+            self.finished(context)
+            return False
+
 
         # Inference
         self.future_output = future.Future()
@@ -185,9 +207,8 @@ class DepthPredict(bpy.types.Operator):
                 self.future_output.set_done()
         # Run the async task in a separate thread
         threading.Thread(target=async_inference).start()
-
-        return {'RUNNING_MODAL'}
-
+        
+        return True
 
     def modal(self, context, event):
         if event.type == 'TIMER':
@@ -211,11 +232,8 @@ class DepthPredict(bpy.types.Operator):
                     props.inference_progress = 0
                 except Exception as e:
                     self.report({'ERROR'}, f"Inference failed: {e}")
-                finally:
-                    global running
-                    running = False
-                    context.window_manager.event_timer_remove(self.timer)
-                
+                    
+                self.finished(context)
                 return {'FINISHED'}
                 
         return {'PASS_THROUGH'}

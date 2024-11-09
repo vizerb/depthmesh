@@ -6,14 +6,22 @@ import numpy as np
 
 def preprocess_image(input_image, input_size):
     import cv2
+    image_mean=[0.5, 0.5, 0.5]
+    image_std=[0.5, 0.5, 0.5]
+    
     image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
     
     image = cv2.resize(image, input_size)  # Resize to the model's expected input size
     print(image.shape)
     image = np.array(image).astype('float32')
+    image /= 255.0  # Normalize to [0, 1]
+    image = (image - image_mean) / image_std
+
     image = np.transpose(image, (2, 0, 1))  # Change data layout from HWC to CHW
     image = np.expand_dims(image, axis=0)  # Add batch dimension
-    image /= 255.0  # Normalize to [0, 1]
+
+    image = np.array(image).astype('float32')
+
     return image
 
 
@@ -26,7 +34,7 @@ class Inference():
         import onnxruntime as ort
         import os
         
-        model_file_name = "model.onnx"
+        model_file_name = "model_fp16.onnx"
 
         self.input_size = (1536, 1536)  # [H, W, C]        
         
@@ -36,9 +44,12 @@ class Inference():
         #model_path = os.path.join(self.cache_dir, model_file_name)
         model_path = os.path.join(model_dir, model_file_name)
         
-        providers = ["CPUExecutionProvider"]
+        providers = [
+            "CPUExecutionProvider"
+            ]
         sess_options = ort.SessionOptions()
         self.ort_session = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
+        print("Execution Providers:", self.ort_session.get_providers())
         
     def infer(self, input_image):
         onnx_input = preprocess_image(input_image, self.input_size)
@@ -66,10 +77,11 @@ def run_inference(model_path, image_path):
     # Run inference
     depth = inference.infer(input_image)
 
+    print(depth)
     # Save the depth map to a file
-    depth_map_path = image_path.replace(".jpg", "_depth.npy")
-    np.save(depth_map_path, depth)
+    #depth_map_path = image_path.replace(".jpg", "_depth.npy")
+    #np.save(depth_map_path, depth)
 
-    print(f"Depth map saved to {depth_map_path}")
+    #print(f"Depth map saved to {depth_map_path}")
 
 run_inference('model_fp16.onnx', "/home/flare/Pictures/ghostlyorseg.jpg")

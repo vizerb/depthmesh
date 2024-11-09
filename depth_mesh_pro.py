@@ -141,16 +141,14 @@ class DepthPredict(bpy.types.Operator):
         tex_image.image = texture_image
         # Assign the material to the object to easily access it later (geo nodes assign is where it really gets assigned)
         obj.data.materials.append(material)
-        
-        
-        
-        # Find the latest "displace" node group by checking for the highest numbered suffix
-        displace_nodes = [ng for ng in bpy.data.node_groups if ng.name.startswith("displace")]
-        latest_displace_node = max(displace_nodes, key=lambda ng: int(ng.name.split(".")[-1]) if "." in ng.name else 0)
 
-        # Use the latest "displace" node group
-        node_tree = latest_displace_node
-        #node_tree = bpy.data.node_groups["displace"]
+
+        # Get the displace node group that was just appended
+        node_tree = bpy.data.node_groups.get("displace")
+        
+        # Rename it so it doesn't interfere with the next one
+        node_tree.name = os.path.basename(self.input_filepath).split(".")[0]
+        #node_tree.name = f"displace.{global_vars.count}"
         
         geo = obj.modifiers.new(name="GeometryNodes", type='NODES')
         geo.node_group = node_tree
@@ -169,10 +167,7 @@ class DepthPredict(bpy.types.Operator):
         #focal_length_node = node_tree.nodes.get("FocalLength")
         mat_node = node_tree.nodes.get("Set Material")
         
-        #for op in input_node.outputs:
-        #    print(op, end=", ")
-        #input_node.outputs["Focal Length"].default_value = int(self.focal_length)
-        #print(f"focal length = {self.focal_length}")
+        
         depth_node.inputs[0].default_value = depth_image
         width_node.outputs[0].default_value = image_size[0]
         height_node.outputs[0].default_value = image_size[1]
@@ -191,10 +186,12 @@ class DepthPredict(bpy.types.Operator):
     def execute(self, context):
         props = context.scene.DMPprops
         
-        # First inference
-        if (global_vars.count == 0):
-            #utils.ensure_modules()
-            inference.loadModel()
+        # # First inference
+        # if (global_vars.count == 0):
+        #     #utils.ensure_modules()
+        #     inference.loadModel()
+        inference.loadModel()
+
 
         cpu_mflops = utils.get_cpu_mflops()
         self.duration_estimate = global_vars.model_mflops / cpu_mflops
@@ -242,7 +239,7 @@ class DepthPredict(bpy.types.Operator):
                     props = context.scene.DMPprops
                     props.inference_progress = 100
                     self.depth,self.focal_length = self.future_output.result()
-                    self.report({'INFO'}, f"Inference done")
+                    #self.report({'INFO'}, f"Inference done")
                     self.makeMesh(context)
                     props.inference_progress = 0
                 except Exception as e:
@@ -280,7 +277,7 @@ class DepthPredict(bpy.types.Operator):
         
         self.applyGeoAndMaterial(obj, depth_image, (original_width, original_height))
 
-        
+        inference.unloadModel()
 
         global_vars.count += 1
         self.report({'INFO'}, "Depth mesh generation complete")

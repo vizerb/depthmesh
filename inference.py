@@ -27,7 +27,7 @@ class Inference():
     model = None
     ort_session = None
     
-    cache_dir = utils.get_cache_directory()
+    #cache_dir = utils.get_cache_directory()
     
     def unloadModel(self):
         del self.ort_session

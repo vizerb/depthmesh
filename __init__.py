@@ -10,12 +10,9 @@ bl_info = {
     "version": (1, 0, 0),
 }
 
-from . import depth_mesh_pro, download_operator, install_modules_operator
+from . import depth_mesh_pro
 
 classes = (
-    download_operator.DownloadPropertyGroup,
-    download_operator.DownloadFileOperator,
-    install_modules_operator.InstallModulesOperator,
     depth_mesh_pro.DMPPropertyGroup,
 	depth_mesh_pro.DMPPanel,
     depth_mesh_pro.DepthPredict,

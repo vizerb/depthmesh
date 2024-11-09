@@ -11,8 +11,9 @@ from .inference import Inference
 #start = time.time()
 
 
-models = global_vars.models
+#models = global_vars.models
 inference = Inference()
+running = False
 
 class DMPPropertyGroup(bpy.types.PropertyGroup):
     inputPath: bpy.props.StringProperty(
@@ -21,13 +22,6 @@ class DMPPropertyGroup(bpy.types.PropertyGroup):
         description="Path for input image",
         default=bpy.path.abspath(""),
         maxlen=1024,
-    ) # type: ignore
-    download_progress: bpy.props.FloatProperty(
-        name="Progress",
-        subtype="PERCENTAGE",
-        default=0,
-        soft_min=0, 
-        soft_max=100, 
     ) # type: ignore
     inference_progress: bpy.props.FloatProperty(
         name="Progress",
@@ -44,56 +38,26 @@ class DMPPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Depth Mesh Pro"
-    
-    cache_dir = utils.get_cache_directory()
-    
+        
     def draw(self, context):
+        global running
         props = context.scene.DMPprops
         layout = self.layout
-        
-        if global_vars.MODULES_INSTALLED == None:
-            global_vars.MODULES_INSTALLED = True#utils.are_modules_installed()
-        
         
         dp_path = layout.row()
         dp_path.prop(props, "inputPath")
         layout.separator()
         dp_op = layout.row()
+        dp_op.enabled = not running
         op = dp_op.operator(DepthPredict.bl_idname, text="Make depth mesh", icon='FILE_3D')
         
         if (props.inference_progress > 0):
             layout.separator()
             progress_row = layout.row()
-            if (bpy.app.version >= (4,0,0)):    
+            if (bpy.app.version >= (4,0,0)):
                 progress_row.progress(factor = props.inference_progress/100, type = 'BAR', text = "Inference progress")
             else:
                 progress_row.prop(props,"inference_progress")
-        
-        dp_path.enabled = global_vars.MODELS_CACHED and global_vars.MODULES_INSTALLED
-        dp_op.enabled = global_vars.MODELS_CACHED and global_vars.MODULES_INSTALLED
-        
-        
-        if (not global_vars.MODULES_INSTALLED):
-            layout.operator("dmp.install_modules", text="Install necessary python modules", icon='TRIA_DOWN')
-        else:    
-            if (global_vars.MODELS_CACHED):
-                layout.label(text="Model cached")
-            else:
-                download_model_row = layout.row()
-                download_model_op = download_model_row.operator("dmp.download_model", text="Download model file", icon='TRIA_DOWN')
-                download_model_op.download_list.clear()  # Clear existing items
-                for name,url in models:
-                    item = download_model_op.download_list.add()
-                    item.url = url
-                    item.path = os.path.join(self.cache_dir,name)
-                if 0.0 < props.download_progress:
-                    download_model_row.enabled = False
-                    if (bpy.app.version >= (4,0,0)):
-                        layout.progress(factor = props.download_progress/100, type = 'BAR', text = "Downloading")
-                    else:
-                        progress_bar = layout.row()
-                        progress_bar.prop(props,"download_progress")
-        
         
 
 
@@ -187,11 +151,11 @@ class DepthPredict(bpy.types.Operator):
     
     
     def execute(self, context):
+        global running
+        running = True
         props = context.scene.DMPprops
-        
         # # First inference
         # if (global_vars.count == 0):
-        #     #utils.ensure_modules()
         #     inference.loadModel()
         inference.loadModel()
 
@@ -247,10 +211,13 @@ class DepthPredict(bpy.types.Operator):
                     props.inference_progress = 0
                 except Exception as e:
                     self.report({'ERROR'}, f"Inference failed: {e}")
-                context.window_manager.event_timer_remove(self.timer)
+                finally:
+                    global running
+                    running = False
+                    context.window_manager.event_timer_remove(self.timer)
                 
                 return {'FINISHED'}
-            return {'PASS_THROUGH'}
+                
         return {'PASS_THROUGH'}
 
 

@@ -5,7 +5,8 @@ from . import utils
 #start = time.time()
 
 
-model_mflops = 1338425.860968
+#model_mflops = 1338425.860968
+model_mflops = 4370000
 #cpu_mflops = utils.get_cpu_mflops()
 #duration_estimate = model_mflops / cpu_mflops
 

@@ -83,6 +83,7 @@ modules = [
     "onnxruntime-gpu",
     "opencv-python-headless",
     "psutil",
+    "pandas",
 ]
 
 # BOTH LINUX AND WINDOWS ARE DOWNLOADED THIS IS JUST OLD CODE

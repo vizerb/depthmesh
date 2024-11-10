@@ -42,15 +42,20 @@ class DMPPanel(bpy.types.Panel):
     def draw(self, context):
         global running
         props = context.scene.DMPprops
+        
         layout = self.layout
         
+        # Input
         dp_path = layout.row()
         dp_path.prop(props, "inputPath")
         layout.separator()
+        
+        # Depth mesh generation
         dp_op = layout.row()
         dp_op.enabled = not running
         op = dp_op.operator(DepthPredict.bl_idname, text="Make depth mesh", icon='FILE_3D')
         
+        # Progress bar
         if (props.inference_progress > 0):
             layout.separator()
             progress_row = layout.row()
@@ -169,8 +174,9 @@ class DepthPredict(bpy.types.Operator):
         #     inference.loadModel()
         inference.loadModel()
 
-        cpu_mflops = utils.get_cpu_mflops()
-        self.duration_estimate = global_vars.model_mflops / cpu_mflops
+        #cpu_mflops = utils.get_cpu_mflops()
+        gpu_mflops = utils.get_gpu_mflops()
+        self.duration_estimate = (global_vars.model_mflops / gpu_mflops) * 4
         
         
         import cv2

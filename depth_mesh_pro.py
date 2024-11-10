@@ -14,6 +14,8 @@ from .inference import Inference
 #models = global_vars.models
 inference = Inference()
 running = False
+focal_length_mm = 50.0
+resolution = [1920,1080]
 
 class DMPPropertyGroup(bpy.types.PropertyGroup):
     inputPath: bpy.props.StringProperty(
@@ -41,6 +43,8 @@ class DMPPanel(bpy.types.Panel):
         
     def draw(self, context):
         global running
+        global focal_length_mm
+        global resolution
         props = context.scene.DMPprops
         
         layout = self.layout
@@ -55,6 +59,13 @@ class DMPPanel(bpy.types.Panel):
         dp_op.enabled = not running
         op = dp_op.operator(DepthPredict.bl_idname, text="Make depth mesh", icon='FILE_3D')
         
+        # Align camera operator
+        addcam_row = layout.row()
+        addcam_row.enabled = not running
+        op = addcam_row.operator("dmp.align_cam", text="Align the active camera", icon='VIEW_CAMERA')
+        op.resolution = resolution
+        op.focal_length = focal_length_mm
+        
         # Progress bar
         if (props.inference_progress > 0):
             layout.separator()
@@ -63,8 +74,8 @@ class DMPPanel(bpy.types.Panel):
                 progress_row.progress(factor = props.inference_progress/100, type = 'BAR', text = "Inference progress")
             else:
                 progress_row.prop(props,"inference_progress")
-        
-
+                
+                
 
 
 class DepthPredict(bpy.types.Operator):
@@ -141,7 +152,7 @@ class DepthPredict(bpy.types.Operator):
         geo.node_group = node_tree
         
         # The focal length input socket
-        geo["Socket_7"] = int(self.focal_length)
+        geo["Socket_7"] = float(self.focal_length)
         
         # DepthMap
         geo["Socket_14"] = depth_image
@@ -199,7 +210,9 @@ class DepthPredict(bpy.types.Operator):
             self.report({'ERROR'}, "Failed to load image")
             self.finished(context)
             return False
-
+        global resolution
+        resolution = [self.input_image.shape[1],self.input_image.shape[0]]
+        
 
         # Inference
         self.future_output = future.Future()
@@ -233,6 +246,14 @@ class DepthPredict(bpy.types.Operator):
                     props = context.scene.DMPprops
                     props.inference_progress = 100
                     self.depth,self.focal_length = self.future_output.result()
+                    
+                    # Set global focal_length to be used by addcamera operator also convert local one to mm as well
+                    global focal_length_mm
+                    sensor_width_mm = 36.0
+                    focal_length_px = self.focal_length
+                    self.focal_length = (focal_length_px / 1536) * sensor_width_mm
+                    focal_length_mm = self.focal_length
+                    
                     #self.report({'INFO'}, f"Inference done")
                     self.makeMesh(context)
                     props.inference_progress = 0

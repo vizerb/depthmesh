@@ -3,27 +3,25 @@ import sys
 
 bl_info = {
     "name": "Depth Mesh Pro",
-    "blender": (4, 0, 0),
+    "blender": (4, 2, 0),
     "category": "Import-Export",
     "author": "Flare",
-	"description": "Generates a mesh from an image using monocular depth estimation",
+	"description": "Generates a mesh from an image using monocular metric depth estimation",
     "version": (1, 0, 0),
 }
 
-from . import depth_mesh_pro
+from . import depth_mesh_pro, align_camera_op
 
 classes = (
     depth_mesh_pro.DMPPropertyGroup,
 	depth_mesh_pro.DMPPanel,
     depth_mesh_pro.DepthPredict,
+    align_camera_op.AlignCameraOperator,
 )
 
 
 
-def register():
-    #import site
-    #sys.path.append(site.getusersitepackages())
-    
+def register():   
     for cls in classes:
         bpy.utils.register_class(cls)
         

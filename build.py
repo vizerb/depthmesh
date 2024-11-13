@@ -84,24 +84,14 @@ try_call(cmd, "Deleting old wheels")
 
 modules = [
     "numpy",
-    "onnxruntime-gpu",
     "opencv-python-headless",
     "psutil",
     "pandas",   # Could use built-in csv module and csv files
+    "onnxruntime-directml",
 ]
 
-# BOTH LINUX AND WINDOWS ARE DOWNLOADED THIS IS JUST OLD CODE
-# # Select the OS_TYPE
-# OS_TYPE = "linux"  # linux, mac, windows (mac not supported yet)
-# if len(sys.argv) > 1:
-#     OS_TYPE = sys.argv[1]
-# else:
-#     OS_TYPE = "linux"  # Default to linux if no argument is provided
-
-cmd_linux = build_wheel_command(modules, "linux", PYTHON_VERSION)
 cmd_win = build_wheel_command(modules, "windows", PYTHON_VERSION)
 
-try_call(cmd_linux, "Downloading linux wheels")
 try_call(cmd_win, "Downloading windows wheels")
 
 

@@ -1,7 +1,4 @@
-from . import utils
-from . import global_vars
 import numpy as np
-#from PIL import Image
 
 def preprocess_image(input_image, input_size):
     import cv2
@@ -38,12 +35,9 @@ class Inference():
         
         model_file_name = "model.onnx"
 
-        self.input_size = (1536, 1536)  # [H, W]
+        self.input_size = (1536, 1536)
         
-        #self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        #model_file_name = global_vars.models[0][0]
         model_dir = os.path.dirname(__file__)
-        #model_path = os.path.join(self.cache_dir, model_file_name)
         model_path = os.path.join(model_dir, model_file_name)
         
         providers = [

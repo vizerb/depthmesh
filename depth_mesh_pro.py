@@ -14,8 +14,8 @@ from .inference import Inference
 #models = global_vars.models
 inference = Inference()
 running = False
-focal_length_mm = 50.0
-resolution = [1920,1080]
+focal_length_mm = 0
+resolution = [0,0]
 
 class DMPPropertyGroup(bpy.types.PropertyGroup):
     inputPath: bpy.props.StringProperty(
@@ -61,7 +61,7 @@ class DMPPanel(bpy.types.Panel):
         
         # Align camera operator
         addcam_row = layout.row()
-        addcam_row.enabled = not running
+        addcam_row.enabled = not running and resolution != [0,0] and focal_length_mm != 0
         op = addcam_row.operator("dmp.align_cam", text="Align the active camera", icon='VIEW_CAMERA')
         op.resolution = resolution
         op.focal_length = focal_length_mm

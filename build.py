@@ -50,7 +50,7 @@ def zip_directory(zip_name, excluded_dirs, excluded_patterns):
 
 def build_model_command():
     #cmd = "wget -O model.onnx -nc https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_fp16.onnx?download=true"
-    cmd = "wget -O model.onnx -nc https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_q4.onnx?download=true"
+    cmd = "wget -O model.onnx -nc https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_q4f16.onnx?download=true"
     
     return cmd
 

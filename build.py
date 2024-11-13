@@ -78,12 +78,16 @@ for arg in sys.argv:
 ### Download wheels for the specified modules
 ###
 # MODULES
+# Delete old wheels folder and addon zip
+cmd = "rm -rf wheels dm.zip"
+try_call(cmd, "Deleting old wheels")
+
 modules = [
     "numpy",
     "onnxruntime-gpu",
     "opencv-python-headless",
     "psutil",
-    "pandas",
+    "pandas",   # Could use built-in csv module and csv files
 ]
 
 # BOTH LINUX AND WINDOWS ARE DOWNLOADED THIS IS JUST OLD CODE
@@ -93,10 +97,6 @@ modules = [
 #     OS_TYPE = sys.argv[1]
 # else:
 #     OS_TYPE = "linux"  # Default to linux if no argument is provided
-
-cmd = "rm -rf wheels dm.zip"
-try_call(cmd, "Deleting old wheels")
-
 
 cmd_linux = build_wheel_command(modules, "linux", PYTHON_VERSION)
 cmd_win = build_wheel_command(modules, "windows", PYTHON_VERSION)

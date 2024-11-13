@@ -1,5 +1,4 @@
 import bpy
-import sys
 
 bl_info = {
     "name": "Depth Mesh Pro",

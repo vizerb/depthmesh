@@ -80,7 +80,7 @@ for arg in sys.argv:
 # MODULES
 modules = [
     "numpy",
-    "onnxruntime-gpu",
+    "onnxruntime",
     "opencv-python-headless",
     "psutil",
     "pandas",

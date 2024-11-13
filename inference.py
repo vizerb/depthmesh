@@ -1,6 +1,5 @@
 from . import utils
 from . import global_vars
-from typing import Tuple, Dict, List
 import numpy as np
 #from PIL import Image
 
@@ -30,7 +29,8 @@ class Inference():
     #cache_dir = utils.get_cache_directory()
     
     def unloadModel(self):
-        del self.ort_session
+        if hasattr(self, 'ort_session'):
+            del self.ort_session
     
     def loadModel(self):
         import onnxruntime as ort

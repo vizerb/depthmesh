@@ -122,7 +122,7 @@ if not SKIP_MODEL:
 ###
 ### Zip the addon
 ###
-excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git"]
+excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
 excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]
 
 zip_name = "dm.zip"

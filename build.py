@@ -23,19 +23,6 @@ def build_wheel_command(modules, os_type, python_version="3.11"):
 
     return cmd
 
-# This requires 7zip to be installed so its not used for now
-def build_zip_command(excluded_dirs, excluded_patterns):
-    cmd = "7za u -mx=0 -mmt=on dm.zip ./*"
-
-    # Add exclusions for file types
-    for pattern in excluded_patterns:
-        cmd += f" -x'!{pattern}'"
-
-    # Add exclusions for directories
-    for dir in excluded_dirs:
-        cmd += f" -xr'!./{dir}'"
-
-    return cmd
 
 def zip_directory(zip_name, excluded_dirs, excluded_patterns):
     with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_STORED) as zipf:
@@ -124,15 +111,9 @@ if not SKIP_MODEL:
 ###
 excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
 excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]
-
 zip_name = "dm.zip"
-USE_7ZIP = False
 
-if USE_7ZIP:
-    cmd = build_zip_command(excluded_dirs, excluded_patterns)
-    try_call(cmd, "Zipping files")
-else:
-    zip_directory(zip_name, excluded_dirs, excluded_patterns)
+zip_directory(zip_name, excluded_dirs, excluded_patterns)
 
 
 

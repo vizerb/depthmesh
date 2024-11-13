@@ -11,7 +11,6 @@ from .inference import Inference
 #start = time.time()
 
 
-#models = global_vars.models
 inference = Inference()
 running = False
 focal_length_mm = 0
@@ -70,10 +69,7 @@ class DMPPanel(bpy.types.Panel):
         if (props.inference_progress > 0):
             layout.separator()
             progress_row = layout.row()
-            if (bpy.app.version >= (4,0,0)):
-                progress_row.progress(factor = props.inference_progress/100, type = 'BAR', text = "Inference progress")
-            else:
-                progress_row.prop(props,"inference_progress")
+            progress_row.progress(factor = props.inference_progress/100, type = 'BAR', text = "Inference progress")
                 
                 
 
@@ -109,8 +105,8 @@ class DepthPredict(bpy.types.Operator):
         
         # This appends the geonodes group and also the material because the node group uses it
         bpy.ops.wm.append(
-            filepath=os.path.join(blend_file,inner_path,object_name), #str(blend_file / inner_path / object_name),
-            directory=os.path.join(blend_file,inner_path),#str(blend_file / inner_path),
+            filepath=os.path.join(blend_file,inner_path,object_name),
+            directory=os.path.join(blend_file,inner_path),
             filename=object_name
         )
     
@@ -133,10 +129,6 @@ class DepthPredict(bpy.types.Operator):
         # Load the image texture
         texture_image = bpy.data.images.load(self.input_filepath)
         
-        # # Get the appended material and copy it so that the original is available for the next usage
-        # original_material = bpy.data.materials["DMPMaterial"]
-        # original_material.use_fake_user = True  # Set fake user to keep the material in the file
-        # material = original_material.copy()
         # Rename it so it doesn't collide with the next one
         filename = os.path.basename(self.input_filepath).split(".")[0]
         material.name = filename
@@ -255,7 +247,6 @@ class DepthPredict(bpy.types.Operator):
                     self.focal_length = (focal_length_px / 1536) * sensor_width_mm
                     focal_length_mm = self.focal_length
                     
-                    #self.report({'INFO'}, f"Inference done")
                     self.makeMesh(context)
                     props.inference_progress = 0
                 except Exception as e:
@@ -272,7 +263,6 @@ class DepthPredict(bpy.types.Operator):
         
         original_width, original_height = self.input_image.shape[1],self.input_image.shape[0]
         out_width, out_height = int(self.depth.shape[1]), int(self.depth.shape[0])
-        #aspect_ratio = original_width / original_height
 
         
         # Add plane
@@ -288,7 +278,6 @@ class DepthPredict(bpy.types.Operator):
         rgba_data = np.stack([mirrored_pred]*4, axis=-1)
         depth_image.pixels = rgba_data.flatten()
         depth_image.pack()
-        
         
         
         self.applyGeoAndMaterial(obj, depth_image, (original_width, original_height))

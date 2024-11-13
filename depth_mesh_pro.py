@@ -185,9 +185,9 @@ class DepthPredict(bpy.types.Operator):
         #     inference.loadModel()
         inference.loadModel()
 
-        #cpu_mflops = utils.get_cpu_mflops()
-        gpu_mflops = utils.get_gpu_mflops()
-        self.duration_estimate = (global_vars.model_mflops / gpu_mflops) * 4
+        cpu_mflops = utils.get_cpu_mflops()
+        #gpu_mflops = utils.get_gpu_mflops()
+        self.duration_estimate = (global_vars.model_mflops / cpu_mflops) * 2.5
         
         
         import cv2
@@ -224,6 +224,7 @@ class DepthPredict(bpy.types.Operator):
                 self.future_output.set_exception(e)
             finally:
                 self.future_output.set_done()
+
         # Run the async task in a separate thread
         threading.Thread(target=async_inference).start()
         
@@ -293,9 +294,41 @@ class DepthPredict(bpy.types.Operator):
         self.applyGeoAndMaterial(obj, depth_image, (original_width, original_height))
 
         inference.unloadModel()
+        
+        self.cleanup()
 
         global_vars.count += 1
         self.report({'INFO'}, "Depth mesh generation complete")
+        
+        
+
+    def cleanup(self):
+        # Release resources and clean up variables
+        if hasattr(self, 'future_output'):
+            del self.future_output
+            self.future_output = None
+        
+        if hasattr(self, 'input_filepath'):
+            del self.input_filepath
+            self.input_filepath = None
+        
+        if hasattr(self, 'input_image'):
+            del self.input_image
+            self.input_image = None
+        
+        if hasattr(self, 'depth'):
+            del self.depth
+            self.depth = None
+        
+        if hasattr(self, 'focal_length'):
+            del self.focal_length
+            self.focal_length = None
+        
+        print("Cleanup")
+
+    def __del__(self):
+        # Ensure cleanup is called when the operator is deleted
+        self.cleanup()
         
 
 #print(f"depth_mesh_gen time: {time.time()-start}")

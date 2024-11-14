@@ -5,6 +5,7 @@ import sys
 import glob
 import zipfile
 import os
+import sys
 
 def build_wheel_command(modules, os_type, python_version="3.11"):
     cmd = "pip download "
@@ -35,6 +36,40 @@ def zip_directory(zip_name, excluded_dirs, excluded_patterns):
                 if not any(glob.fnmatch.fnmatch(file, pattern) for pattern in excluded_patterns):
                     zipf.write(file_path, os.path.relpath(file_path, '.'))
 
+                    
+def progress_bar(count, total, status=''):
+    bar_length = 40
+    filled_length = int(bar_length * count / total)
+    percent = round(100.0 * count / total, 1)
+    bar = '=' * filled_length + '-' * (bar_length - filled_length)
+    sys.stdout.write(f'\r[{bar}] {percent}% {status}')
+    sys.stdout.flush()
+
+def download_file(url, destination):
+    import urllib.request
+
+    if os.path.exists(destination):
+        print(f"File {destination} already exists, skipping download.")
+        return
+
+    try:
+        response = urllib.request.urlopen(url)
+        total_size = int(response.headers['Content-Length'])
+        downloaded_size = 0
+        block_size = 8192
+        with open(destination, 'wb') as f:
+            while True:
+                buffer = response.read(block_size)
+                if not buffer:
+                    break
+                downloaded_size += len(buffer)
+                f.write(buffer)
+                progress_bar(downloaded_size, total_size, status='Downloading')
+        print(f"\nDownloaded file from {url} to {destination}.")
+    except Exception as e:
+        print(f"Error downloading file from {url}: {str(e)}")
+
+
 def build_model_command():
     #cmd = "wget -O model.onnx -nc https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_fp16.onnx?download=true"
     cmd = "wget -O model.onnx -nc https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_q4f16.onnx?download=true"
@@ -46,7 +81,7 @@ def try_call(cmd, stage):
     ret = subprocess.run(cmd, shell=True)
     print (ret.returncode)
     if ret.returncode == 1:
-        print("Model already downloaded, skipping")
+        print("Model already downloaded or error occured, skipping")
     elif ret.returncode != 0:
         print(f"Error {stage}")
         sys.exit(1)
@@ -103,8 +138,10 @@ with open("blender_manifest.toml", "w") as f:
 ### Download the model if not skipped
 ###
 if not SKIP_MODEL:
-    cmd = build_model_command()
-    try_call(cmd, "Downloading model")
+    # cmd = build_model_command()
+    # try_call(cmd, "Downloading model")
+    print("Downloading model")
+    download_file("https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_q4f16.onnx?download=true", "model.onnx")
 
 ###
 ### Zip the addon

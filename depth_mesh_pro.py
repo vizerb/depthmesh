@@ -179,7 +179,7 @@ class DepthPredict(bpy.types.Operator):
 
         #cpu_mflops = utils.get_cpu_mflops()
         gpu_mflops = utils.get_gpu_mflops()
-        self.duration_estimate = (global_vars.model_mflops / gpu_mflops) * 4
+        self.duration_estimate = (global_vars.model_mflops / gpu_mflops) * 4 * 2
         
         
         import cv2

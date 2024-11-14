@@ -138,7 +138,8 @@ start = content.find("wheels = [") + len("wheels = [")
 end = content.find("]", start)
 wheels_str = "\n"
 for wheel in wheels:
-    wheels_str += f'\t"{wheel}",\n'
+    wheel_path = wheel.replace("\\", "/")
+    wheels_str += f'\t"{wheel_path}",\n'
 content = content[:start] + wheels_str + content[end:]
 
 with open("blender_manifest.toml", "w") as f:

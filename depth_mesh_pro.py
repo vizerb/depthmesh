@@ -13,9 +13,8 @@ from .inference import Inference
 
 inference = Inference()
 running = False
-#focal_length_mm = 0
+focal_length_mm = 0
 resolution = [0,0]
-geo_modifier = None
 
 class DMPPropertyGroup(bpy.types.PropertyGroup):
     inputPath: bpy.props.StringProperty(
@@ -43,8 +42,8 @@ class DMPPanel(bpy.types.Panel):
         
     def draw(self, context):
         global running
+        global focal_length_mm
         global resolution
-        global geo_modifier
         props = context.scene.DMPprops
         
         layout = self.layout
@@ -61,11 +60,10 @@ class DMPPanel(bpy.types.Panel):
         
         # Align camera operator
         addcam_row = layout.row()
-        addcam_row.enabled = not running and resolution != [0,0] and geo_modifier is not None and geo_modifier.name != ""
+        addcam_row.enabled = not running and resolution != [0,0] and focal_length_mm != 0
         op = addcam_row.operator("dmp.align_cam", text="Align the active camera", icon='VIEW_CAMERA')
-        if (addcam_row.enabled):
-            op.resolution = resolution
-            op.focal_length = geo_modifier["Socket_7"]
+        op.resolution = resolution
+        op.focal_length = focal_length_mm
         
         # Progress bar
         if (props.inference_progress > 0):
@@ -144,8 +142,6 @@ class DepthPredict(bpy.types.Operator):
         
         geo = obj.modifiers.new(name="GeometryNodes", type='NODES')
         geo.node_group = node_tree
-        global geo_modifier
-        geo_modifier = bpy.data.objects[obj.name].modifiers[geo.name]
         
         # The focal length input socket
         geo["Socket_7"] = float(self.focal_length)
@@ -245,11 +241,11 @@ class DepthPredict(bpy.types.Operator):
                     self.depth,self.focal_length = self.future_output.result()
                     
                     # Set global focal_length to be used by addcamera operator also convert local one to mm as well
-                    #global focal_length_mm
+                    global focal_length_mm
                     sensor_width_mm = 36.0
                     focal_length_px = self.focal_length
                     self.focal_length = (focal_length_px / 1536) * sensor_width_mm
-                    #focal_length_mm = self.focal_length
+                    focal_length_mm = self.focal_length
                     
                     self.makeMesh(context)
                     props.inference_progress = 0

@@ -312,10 +312,6 @@ class DepthPredict(bpy.types.Operator):
         if self.focal_length is not None:
             del self.focal_length
             self.focal_length = None
-
-    def __del__(self):
-        # Ensure cleanup is called when the operator is deleted
-        self.cleanup()
         
 
 #print(f"depth_mesh_gen time: {time.time()-start}")

@@ -100,6 +100,10 @@ for arg in sys.argv:
 ### Download wheels for the specified modules
 ###
 # MODULES
+# Delete old wheels folder and addon zip
+cmd = "rm -rf wheels"
+try_call(cmd, "Deleting old wheels")
+
 modules = [
     "numpy",
     "onnxruntime",
@@ -116,10 +120,6 @@ modules = [
 # else:
 #     OS_TYPE = "linux"  # Default to linux if no argument is provided
 
-cmd = "rm -rf wheels dm.zip"
-try_call(cmd, "Deleting old wheels")
-
-
 cmd_linux = build_wheel_command(modules, "linux", PYTHON_VERSION)
 cmd_win = build_wheel_command(modules, "windows", PYTHON_VERSION)
 
@@ -133,6 +133,9 @@ try_call(cmd_win, "Downloading windows wheels")
 wheels = glob.glob("wheels/*.whl")
 with open("blender_manifest_base.toml", "r") as f:
     content = f.read()
+
+
+
 
 start = content.find("wheels = [") + len("wheels = [")
 end = content.find("]", start)
@@ -157,9 +160,18 @@ if not SKIP_MODEL:
 ###
 ### Zip the addon
 ###
+# Get the addon id and version from manifest
+
+start = content.find('id = "') + len('id = "')
+end = content.find('"', start)
+id = content[start:end]
+start = content.find('version = "') + len('version = "')
+end = content.find('"', start)
+version = content[start:end]
+
 excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
 excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]
-zip_name = "dm.zip"
+zip_name = f"{id}-{version}.zip"
 
 zip_directory(zip_name, excluded_dirs, excluded_patterns)
 

@@ -166,10 +166,11 @@ id = content[start:end]
 start = content.find('version = "') + len('version = "')
 end = content.find('"', start)
 version = content[start:end]
+platform = OS_TYPE+"_x64"
 
 excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
 excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]
-zip_name = f"{id}-{version}.zip"
+zip_name = f"{id}-{version}-{platform}.zip"
 
 zip_directory(zip_name, excluded_dirs, excluded_patterns)
 

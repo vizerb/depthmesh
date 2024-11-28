@@ -34,8 +34,7 @@ def get_gpu_mflops():
     # Filter rows by the value of their first column
     filtered_df = df[df.iloc[:, 0] == gpu_name]
     if not filtered_df.empty:
-        print(filtered_df.iloc[0, 9])
         return int(filtered_df.iloc[0, 9])
     else:
-        print("No matching rows found.")
+        #print("No matching rows found.")
         return 1000000

@@ -48,8 +48,8 @@ jobs:
 
       # Upload build artifacts
       - name: Upload Artifacts
-        #uses: ChristopherHX/gitea-upload-artifact@v4
-        uses: actions/upload-artifact@v3
+        uses: ChristopherHX/gitea-upload-artifact@v4
+        #uses: actions/upload-artifact@v3
         with:
           name: dm
           path: dm.zip

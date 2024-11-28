@@ -45,14 +45,7 @@ model_dir = os.path.dirname(__file__)
 model_path = os.path.join(model_dir, model_file_name)
 
 providers = [
-    ('CUDAExecutionProvider', {
-        'device_id': 0,
-        'arena_extend_strategy': 'kNextPowerOfTwo',    #'kNextPowerOfTwo',kSameAsRequested
-        'gpu_mem_limit': 5 * 1024 * 1024 * 1024,
-        'cudnn_conv_algo_search': 'EXHAUSTIVE',
-        'cudnn_conv_use_max_workspace': 0,
-    }),
-    'CPUExecutionProvider',
+    "CPUExecutionProvider",
 ]
 
 # Only log errors

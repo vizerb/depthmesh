@@ -2,7 +2,7 @@ schema_version = "1.0.0"
 
 # Example of manifest file for a Blender extension
 # Change the values according to your extension
-id = "depthmeshpro"
+id = "depthmeshpro-cuda"
 version = "1.0.0"
 name = "Depth Mesh Pro"
 tagline = "An add-on that creates metrically accurate meshes from images"

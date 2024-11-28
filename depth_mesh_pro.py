@@ -293,27 +293,25 @@ class DepthPredict(bpy.types.Operator):
 
     def cleanup(self):
         # Release resources and clean up variables
-        if self.future_output:
+        if self.future_output is not None:
             del self.future_output
             self.future_output = None
         
-        if self.input_filepath:
+        if self.input_filepath is not None:
             del self.input_filepath
             self.input_filepath = None
         
-        if self.input_image:
+        if self.input_image is not None:
             del self.input_image
             self.input_image = None
         
-        if self.depth:
+        if self.depth is not None:
             del self.depth
             self.depth = None
         
-        if self.focal_length:
+        if self.focal_length is not None:
             del self.focal_length
             self.focal_length = None
-        
-        #print("Cleanup")
 
     def __del__(self):
         # Ensure cleanup is called when the operator is deleted

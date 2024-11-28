@@ -89,12 +89,14 @@ def try_call(cmd, stage):
 
 SKIP_MODEL = False  # Skip downloading the model file (its too large for ci)
 PYTHON_VERSION = "3.11"  # the version blender(4.2) uses
+OS_TYPE = "linux"  # linux, mac, windows (mac not supported yet)
 for arg in sys.argv:
     if arg.startswith("py="):
         PYTHON_VERSION = arg.split("=")[1]
-        break
     elif arg == "skip_model":
         SKIP_MODEL = True
+    elif arg.startswith("os="):
+        OS_TYPE = arg.split("=")[1]
 
 ###
 ### Download wheels for the specified modules
@@ -114,19 +116,13 @@ modules = [
     "nvidia-cuda-runtime-cu12"
 ]
 
-# BOTH LINUX AND WINDOWS ARE DOWNLOADED THIS IS JUST OLD CODE
-# # Select the OS_TYPE
-# OS_TYPE = "linux"  # linux, mac, windows (mac not supported yet)
-# if len(sys.argv) > 1:
-#     OS_TYPE = sys.argv[1]
-# else:
-#     OS_TYPE = "linux"  # Default to linux if no argument is provided
+cmd = build_wheel_command(modules, OS_TYPE, PYTHON_VERSION)
+try_call(cmd, "Downloading wheels")
+#cmd_linux = build_wheel_command(modules, "linux", PYTHON_VERSION)
+#cmd_win = build_wheel_command(modules, "windows", PYTHON_VERSION)
 
-cmd_linux = build_wheel_command(modules, "linux", PYTHON_VERSION)
-cmd_win = build_wheel_command(modules, "windows", PYTHON_VERSION)
-
-try_call(cmd_linux, "Downloading linux wheels")
-try_call(cmd_win, "Downloading windows wheels")
+#try_call(cmd_linux, "Downloading linux wheels")
+#try_call(cmd_win, "Downloading windows wheels")
 
 
 ###

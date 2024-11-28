@@ -21,33 +21,21 @@ def preprocess_image(input_image, input_size):
 
 
 import sys
-import site
 
 if len(sys.argv) < 2:
     raise ValueError("Input file path not provided")
 
 input_filepath = sys.argv[1]
-
-# # Add the paths to the sys.path so that the dependencies can be resolved
-# for path in sys.argv[2:]:
-#     site.addsitedir(path)
-#     #sys.path.append(path)
-
+# Move the extension site-packages to the top of sys.path otherwise the wrong numpy version is imported
 extension_site_packages = "/home/flare/.config/blender/4.2/extensions/.local/lib/python3.12/site-packages"
 if extension_site_packages in sys.path:
     sys.path.remove(extension_site_packages)
 sys.path.insert(0, extension_site_packages)
 
-try:
-    import onnxruntime as ort
-    import os
-    import cv2
-    import numpy as np
-except ImportError as e:
-    print(f"Failed to import required dependencies: {e}")
-    raise ImportError(f"Failed to import required dependencies: {e}")
-
-#print("asd")
+import onnxruntime as ort
+import os
+import cv2
+import numpy as np
 
 model_file_name = "model.onnx"
 
@@ -67,17 +55,10 @@ providers = [
     'CPUExecutionProvider',
 ]
 
-#print(sys.argv[1].encode())
-#print("asd")
-
 # Only log errors
 ort.set_default_logger_severity(3)
 sess_options = ort.SessionOptions()
 ort_session = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
-
-
-#print(sys.argv[1])
-
 
 input_image = cv2.imread(input_filepath)
 if input_image is None:
@@ -92,7 +73,6 @@ depth = outputs[0].squeeze()  # Depth in [m].
 focallength_px = outputs[1][0][0]  # Focal length in pixels.
 
 import pickle
-
 out_dict = {
     "depth": depth,
     "focal_length": focallength_px

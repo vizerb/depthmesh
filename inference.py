@@ -21,10 +21,6 @@ def preprocess_image(input_image, input_size):
 
 
 class Inference():
-    #os.environ["CUDNN_INCLUDE_DIR"] = cudnn_include_path
-    
-    
-    
     model = None
     ort_session = None
     

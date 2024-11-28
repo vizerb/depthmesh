@@ -70,8 +70,6 @@ class DMPPanel(bpy.types.Panel):
             layout.separator()
             progress_row = layout.row()
             progress_row.progress(factor = props.inference_progress/100, type = 'BAR', text = "Inference progress")
-                
-                
 
 
 class DepthPredict(bpy.types.Operator):
@@ -175,7 +173,7 @@ class DepthPredict(bpy.types.Operator):
         # # First inference
         # if (global_vars.count == 0):
         #     inference.loadModel()
-        inference.loadModel()
+        #inference.loadModel()
 
         #cpu_mflops = utils.get_cpu_mflops()
         gpu_mflops = utils.get_gpu_mflops()
@@ -207,10 +205,24 @@ class DepthPredict(bpy.types.Operator):
         
 
         # Inference
+        import subprocess
         self.future_output = future.Future()
         def async_inference():
             try:
-                output = inference.infer(self.input_image)
+                import nvidia.cudnn
+                import nvidia.cuda_runtime
+                import os
+                import sys
+                cudnn_lib_path = os.path.join(nvidia.cudnn.__path__[0],"lib")
+                cuda_lib_path = os.path.join(nvidia.cuda_runtime.__path__[0],"lib")
+                os.environ["LD_LIBRARY_PATH"] = f"{cuda_lib_path}:{cudnn_lib_path}:{os.environ.get('LD_LIBRARY_PATH', '')}"
+                
+                d = os.path.dirname(__file__)
+                p = os.path.join(d, "inference_sb.py")
+                
+                args = [sys.executable, p, self.input_filepath]
+                output = subprocess.run(args, capture_output=True)
+                
                 self.future_output.add_response(output)
             except Exception as e:
                 self.future_output.set_exception(e)
@@ -238,7 +250,9 @@ class DepthPredict(bpy.types.Operator):
                 try:
                     props = context.scene.DMPprops
                     props.inference_progress = 100
-                    self.depth,self.focal_length = self.future_output.result()
+                    import pickle
+                    out_dict = pickle.loads(self.future_output.result().stdout)
+                    self.depth,self.focal_length = out_dict["depth"],out_dict["focal_length"]
                     
                     # Set global focal_length to be used by addcamera operator also convert local one to mm as well
                     global focal_length_mm
@@ -282,7 +296,7 @@ class DepthPredict(bpy.types.Operator):
         
         self.applyGeoAndMaterial(obj, depth_image, (original_width, original_height))
 
-        inference.unloadModel()
+        #inference.unloadModel()
         
         self.cleanup()
 
@@ -293,23 +307,23 @@ class DepthPredict(bpy.types.Operator):
 
     def cleanup(self):
         # Release resources and clean up variables
-        if self.future_output:
+        if self.future_output is not None:
             del self.future_output
             self.future_output = None
         
-        if self.input_filepath:
+        if self.input_filepath is not None:
             del self.input_filepath
             self.input_filepath = None
         
-        if self.input_image:
+        if self.input_image is not None:
             del self.input_image
             self.input_image = None
         
-        if self.depth:
+        if self.depth is not None:
             del self.depth
             self.depth = None
         
-        if self.focal_length:
+        if self.focal_length is not None:
             del self.focal_length
             self.focal_length = None
         

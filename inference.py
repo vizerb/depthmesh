@@ -1,4 +1,5 @@
 import numpy as np
+from . import utils
 
 def preprocess_image(input_image, input_size):
     import cv2
@@ -20,6 +21,10 @@ def preprocess_image(input_image, input_size):
 
 
 class Inference():
+    #os.environ["CUDNN_INCLUDE_DIR"] = cudnn_include_path
+    
+    
+    
     model = None
     ort_session = None
     
@@ -29,12 +34,12 @@ class Inference():
         if hasattr(self, 'ort_session'):
             del self.ort_session
     
-    def loadModel(self):
+    def loadModel(self):       
         import onnxruntime as ort
         import os
         
         model_file_name = "model.onnx"
-
+        
         self.input_size = (1536, 1536)
         
         model_dir = os.path.dirname(__file__)

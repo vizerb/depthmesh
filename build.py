@@ -110,6 +110,8 @@ modules = [
     "opencv-python-headless",
     "psutil",
     "pandas",   # Could use built-in csv module and csv files
+    "nvidia-cudnn-cu12",
+    "nvidia-cuda-runtime-cu12"
 ]
 
 # BOTH LINUX AND WINDOWS ARE DOWNLOADED THIS IS JUST OLD CODE

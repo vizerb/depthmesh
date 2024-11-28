@@ -5,17 +5,17 @@ schema_version = "1.0.0"
 id = "depthmeshpro"
 version = "1.0.0"
 name = "Depth Mesh Pro"
-tagline = "A Blender add-on that creates metrically accurate 3D models from 2D images."
+tagline = "An add-on that creates metrically accurate meshes from images"
 maintainer = "Flare <flarethecreator@gmail.com>"
 # Supported types: "add-on", "theme"
 type = "add-on"
 
 # Optional link to documentation, support, source files, etc
-# website = "https://extensions.blender.org/add-ons/my-example-package/"
+website = "https://flare03.gumroad.com/l/dmp"
 
 # Optional list defined by Blender and server, see:
 # https://docs.blender.org/manual/en/dev/advanced/extensions/tags.html
-tags = ["Import/Export"]
+tags = ["Import-Export","Add Mesh"]
 
 blender_version_min = "4.2.0"
 # # Optional: Blender version that the extension does not support, earlier versions are supported.
@@ -57,16 +57,22 @@ wheels = [
 # # Keep this a single short sentence without a period (.) at the end.
 # # For longer explanations use the documentation or detail page.
 #
-# [permissions]
+[permissions]
+files = "Import the images from disk"
 # network = "Need to sync motion-capture data to server"
-# files = "Import/export FBX from/to disk"
 # clipboard = "Copy and paste bone transforms"
 
 # Optional: build settings.
 # https://docs.blender.org/manual/en/dev/advanced/extensions/command_line_arguments.html#command-line-args-extension-build
-# [build]
-# paths_exclude_pattern = [
-#   "__pycache__/",
-#   "/.git/",
-#   "/*.zip",
-# ]
+
+[build]
+paths_exclude_pattern = [
+  "__pycache__/",
+  "/.git/",
+  "/*.zip",
+  "/*.blend1",
+  "/build.py",
+  "/testing/",
+  "/.gitea/",
+  "/**/.*",
+]

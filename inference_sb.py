@@ -19,18 +19,20 @@ def preprocess_image(input_image, input_size):
     return image
 
 
-
 import sys
+import site
 
 if len(sys.argv) < 2:
     raise ValueError("Input file path not provided")
 
 input_filepath = sys.argv[1]
+
+extension_sp = sys.argv[2]
 # Move the extension site-packages to the top of sys.path otherwise the wrong numpy version is imported
-extension_site_packages = "/home/flare/.config/blender/4.2/extensions/.local/lib/python3.12/site-packages"
-if extension_site_packages in sys.path:
-    sys.path.remove(extension_site_packages)
-sys.path.insert(0, extension_site_packages)
+if extension_sp in sys.path:
+    sys.path.remove(extension_sp)
+sys.path.insert(0, extension_sp)
+
 
 import onnxruntime as ort
 import os

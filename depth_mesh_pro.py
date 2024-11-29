@@ -217,10 +217,22 @@ class DepthPredict(bpy.types.Operator):
                 cuda_lib_path = os.path.join(nvidia.cuda_runtime.__path__[0],"lib")
                 os.environ["LD_LIBRARY_PATH"] = f"{cuda_lib_path}:{cudnn_lib_path}:{os.environ.get('LD_LIBRARY_PATH', '')}"
                 
-                d = os.path.dirname(__file__)
-                p = os.path.join(d, "inference_sb.py")
+                dir = os.path.dirname(__file__)
+                script_path = os.path.join(dir, "inference_sb.py")
                 
-                args = [sys.executable, p, self.input_filepath]
+                # Pass the extensions site-packages to the subprocess
+                extension_sp = ""
+                ver = bpy.app.version
+                searchstr = f"blender/{ver[0]}.{ver[1]}/extensions/.local/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages"
+                for p in sys.path: 
+                    if searchstr in p:
+                        extension_sp = p
+                        break
+                
+                print(searchstr)
+                print(extension_sp)
+                
+                args = [sys.executable, script_path, self.input_filepath, extension_sp]
                 output = subprocess.run(args, capture_output=True)
                 
                 self.future_output.add_response(output)

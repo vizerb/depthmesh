@@ -10,3 +10,4 @@ blender_manifest.toml
 
 # Directories
 models/*
+*/venv/*

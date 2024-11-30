@@ -109,11 +109,13 @@ try_call(cmd, "Deleting old wheels")
 modules = [
     "numpy",
     "onnxruntime-gpu",
-    "opencv-python-headless",
+    "opencv-python-headless",   # TODO: replace with pillow
+    "pillow",
     "psutil",
     "pandas",   # Could use built-in csv module and csv files
     "nvidia-cudnn-cu12",
-    "nvidia-cuda-runtime-cu12"
+    "nvidia-cuda-runtime-cu12",
+    "nvidia-cufft-cu12",    # Needed on windows
 ]
 
 cmd = build_wheel_command(modules, OS_TYPE, PYTHON_VERSION)

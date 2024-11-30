@@ -171,9 +171,10 @@ class DepthPredict(bpy.types.Operator):
         running = True
         props = context.scene.DMPprops
         # # First inference
-        # if (global_vars.count == 0):
-        #     inference.loadModel()
-        #inference.loadModel()
+        if (global_vars.count == 0):
+            utils.add_nvidia_dlls_to_path()
+        
+        inference.loadModel()
 
         #cpu_mflops = utils.get_cpu_mflops()
         gpu_mflops = utils.get_gpu_mflops()
@@ -209,32 +210,7 @@ class DepthPredict(bpy.types.Operator):
         self.future_output = future.Future()
         def async_inference():
             try:
-                import nvidia.cudnn
-                import nvidia.cuda_runtime
-                import os
-                import sys
-                cudnn_lib_path = os.path.join(nvidia.cudnn.__path__[0],"lib")
-                cuda_lib_path = os.path.join(nvidia.cuda_runtime.__path__[0],"lib")
-                os.environ["LD_LIBRARY_PATH"] = f"{cuda_lib_path}:{cudnn_lib_path}:{os.environ.get('LD_LIBRARY_PATH', '')}"
-                
-                dir = os.path.dirname(__file__)
-                script_path = os.path.join(dir, "inference_sb.py")
-                
-                # Pass the extensions site-packages to the subprocess
-                extension_sp = ""
-                ver = bpy.app.version
-                searchstr = f"blender/{ver[0]}.{ver[1]}/extensions/.local/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages"
-                for p in sys.path: 
-                    if searchstr in p:
-                        extension_sp = p
-                        break
-                
-                print(searchstr)
-                print(extension_sp)
-                
-                args = [sys.executable, script_path, self.input_filepath, extension_sp]
-                output = subprocess.run(args, capture_output=True)
-                
+                output = inference.infer(self.input_image)
                 self.future_output.add_response(output)
             except Exception as e:
                 self.future_output.set_exception(e)
@@ -262,9 +238,7 @@ class DepthPredict(bpy.types.Operator):
                 try:
                     props = context.scene.DMPprops
                     props.inference_progress = 100
-                    import pickle
-                    out_dict = pickle.loads(self.future_output.result().stdout)
-                    self.depth,self.focal_length = out_dict["depth"],out_dict["focal_length"]
+                    self.depth,self.focal_length = self.future_output.result()
                     
                     # Set global focal_length to be used by addcamera operator also convert local one to mm as well
                     global focal_length_mm

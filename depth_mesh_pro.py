@@ -171,8 +171,8 @@ class DepthPredict(bpy.types.Operator):
         running = True
         props = context.scene.DMPprops
         # # First inference
-        # if (global_vars.count == 0):
-        #     inference.loadModel()
+        if (global_vars.count == 0):
+            utils.add_nvidia_dlls_to_path()
         #inference.loadModel()
 
         #cpu_mflops = utils.get_cpu_mflops()
@@ -209,13 +209,8 @@ class DepthPredict(bpy.types.Operator):
         self.future_output = future.Future()
         def async_inference():
             try:
-                import nvidia.cudnn
-                import nvidia.cuda_runtime
                 import os
                 import sys
-                cudnn_lib_path = os.path.join(nvidia.cudnn.__path__[0],"lib")
-                cuda_lib_path = os.path.join(nvidia.cuda_runtime.__path__[0],"lib")
-                os.environ["LD_LIBRARY_PATH"] = f"{cuda_lib_path}:{cudnn_lib_path}:{os.environ.get('LD_LIBRARY_PATH', '')}"
                 
                 dir = os.path.dirname(__file__)
                 script_path = os.path.join(dir, "inference_sb.py")
@@ -228,9 +223,6 @@ class DepthPredict(bpy.types.Operator):
                     if searchstr in p:
                         extension_sp = p
                         break
-                
-                print(searchstr)
-                print(extension_sp)
                 
                 args = [sys.executable, script_path, self.input_filepath, extension_sp]
                 output = subprocess.run(args, capture_output=True)

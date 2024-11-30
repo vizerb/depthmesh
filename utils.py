@@ -38,3 +38,17 @@ def get_gpu_mflops():
     else:
         #print("No matching rows found.")
         return 1000000
+
+
+def add_nvidia_dlls_to_path():
+    import os
+    import importlib
+    import nvidia
+    
+    nvidia_dir = os.listdir(nvidia.__path__[0])
+    for folder in nvidia_dir:
+        if (folder.startswith("__")):
+            continue
+        module = importlib.import_module(f"nvidia.{folder}")
+        # This one didnt work on my machine but is supposed to
+        os.environ["LD_LIBRARY_PATH"] = os.path.join(module.__path__[0], "lib") + os.pathsep + os.environ.get("LD_LIBRARY_PATH","")

@@ -113,7 +113,10 @@ modules = [
     "psutil",
     "pandas",   # Could use built-in csv module and csv files
     "nvidia-cudnn-cu12",
-    "nvidia-cuda-runtime-cu12"
+    "nvidia-cuda-runtime-cu12",
+    "nvidia-cufft-cu12",
+    "nvidia-curand-cu12",   # Needed for linux only
+    "nvidia-cuda-nvrtc-cu12",   # Needed for linux only
 ]
 
 cmd = build_wheel_command(modules, OS_TYPE, PYTHON_VERSION)

@@ -97,6 +97,8 @@ for arg in sys.argv:
         SKIP_MODEL = True
     elif arg.startswith("os="):
         OS_TYPE = arg.split("=")[1]
+    elif arg.startswith("ep="):
+        EXEC_PROVIDER = arg.split("=")[1]
 
 ###
 ### Download wheels for the specified modules
@@ -108,11 +110,29 @@ try_call(cmd, "Deleting old wheels")
 
 modules = [
     "numpy",
-    "onnxruntime",
-    "opencv-python-headless",
+    "opencv-python-headless",   # TODO: replace with pillow
+    "pillow",
     "psutil",
-    "pandas",
+    "pandas",   # Could use built-in csv module and csv files
 ]
+
+if EXEC_PROVIDER == "cpu":
+    modules += "onnxruntime"
+elif EXEC_PROVIDER == "directml":
+    modules += "onnxruntime-directml"
+elif EXEC_PROVIDER == "cuda":
+    cuda_modules = [
+        "onnxruntime-gpu",
+        "nvidia-cudnn-cu12",
+        "nvidia-cuda-runtime-cu12",
+        "nvidia-cufft-cu12",
+        "nvidia-cudnn-cu12",
+        "nvidia-curand-cu12",       # Needed for linux only
+        "nvidia-cuda-nvrtc-cu12",   # Needed for linux only
+    ]
+    modules.extend(cuda_modules)
+    
+    
 
 cmd = build_wheel_command(modules, OS_TYPE, PYTHON_VERSION)
 try_call(cmd, "Downloading wheels")

@@ -1,4 +1,5 @@
 import numpy as np
+from . import global_vars
 
 def preprocess_image(input_image, input_size):
     import cv2
@@ -29,7 +30,7 @@ class Inference():
         if hasattr(self, 'ort_session'):
             del self.ort_session
     
-    def loadModel(self):
+    def loadModel(self):       
         import onnxruntime as ort
         import os
         
@@ -40,9 +41,14 @@ class Inference():
         model_dir = os.path.dirname(__file__)
         model_path = os.path.join(model_dir, model_file_name)
         
-        providers = [
-            'CPUExecutionProvider',
-        ]
+        providers = []
+        if global_vars.VERSION == "CUDA":
+            providers += "CUDAExecutionProvider"
+        elif global_vars.VERSION == "DIRECTML":
+            providers += "DmlExecutionProvider"
+            
+        providers += "CPUExecutionProvider"
+        
         
         # Only log errors
         ort.set_default_logger_severity(3)

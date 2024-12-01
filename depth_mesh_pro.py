@@ -70,8 +70,6 @@ class DMPPanel(bpy.types.Panel):
             layout.separator()
             progress_row = layout.row()
             progress_row.progress(factor = props.inference_progress/100, type = 'BAR', text = "Inference progress")
-                
-                
 
 
 class DepthPredict(bpy.types.Operator):
@@ -173,8 +171,9 @@ class DepthPredict(bpy.types.Operator):
         running = True
         props = context.scene.DMPprops
         # # First inference
-        # if (global_vars.count == 0):
-        #     inference.loadModel()
+        if (global_vars.count == 0):
+            utils.add_nvidia_dlls_to_path()
+        
         inference.loadModel()
 
         cpu_mflops = utils.get_cpu_mflops()
@@ -207,6 +206,7 @@ class DepthPredict(bpy.types.Operator):
         
 
         # Inference
+        import subprocess
         self.future_output = future.Future()
         def async_inference():
             try:

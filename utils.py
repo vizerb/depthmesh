@@ -19,22 +19,39 @@ def get_cpu_mflops():
 def get_gpu_mflops():
     import pandas as pd
     import os
-    gpu_name_full = gpu.platform.renderer_get()
-    vendor = gpu_name_full.split(" ")[0] # example: NVIDIA
-    gpu_name = gpu_name_full.split("/")[0].split(" ")[1:] # example: GeForce RTX 3060 Ti
+    gpu_name_full = gpu.platform.renderer_get() # e.g. str:NVIDIA GeForce RTX 3060 Ti/PCIe/SSE2
+    vendor = gpu_name_full.split(" ")[0] # e.g. str:NVIDIA
+    gpu_name = gpu_name_full.split("/")[0].split(" ")[1:] # e.g. List:[GeForce,RTX,3060,Ti]
     
-    delim = " "
-    gpu_name = delim.join(gpu_name)
+    delim = ""
+    gpu_name = delim.join(gpu_name) # e.g. GeForceRTX3060Ti
     
     file_dir = os.path.dirname(__file__)
     file_name = vendors[vendor]
     
     df = pd.read_csv(os.path.join(file_dir,file_name))
     
-    # Filter rows by the value of their first column
-    filtered_df = df[df.iloc[:, 0] == gpu_name]
+    # Filter rows by the value of their first column also convert to lower case and remove spaces
+    filtered_df = df[df.apply(lambda x: x.astype(str).str.lower().str.replace(" ","") == gpu_name.lower()).any(axis=1)]
+    print(filtered_df)
+    #filtered_df = df[df.iloc[:, 0] == gpu_name]
     if not filtered_df.empty:
         return int(filtered_df.iloc[0, 9])
     else:
         #print("No matching rows found.")
         return 1000000
+
+
+def add_nvidia_dlls_to_path():
+    import os
+    import importlib
+    import nvidia
+    
+    nvidia_dir = os.listdir(nvidia.__path__[0])
+    for folder in nvidia_dir:
+        if (folder.startswith("__")):
+            continue
+        module = importlib.import_module(f"nvidia.{folder}")
+        # This one didnt work on my machine but is supposed to
+        os.add_dll_directory(os.path.join(module.__path__[0],"bin"))
+        os.environ["PATH"] = os.path.join(module.__path__[0], "bin") + os.pathsep + os.environ["PATH"]

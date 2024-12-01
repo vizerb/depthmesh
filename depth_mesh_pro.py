@@ -171,7 +171,7 @@ class DepthPredict(bpy.types.Operator):
         running = True
         props = context.scene.DMPprops
         # # First inference
-        if (global_vars.count == 0):
+        if (global_vars.count == 0 and global_vars.VERSION=="CUDA"):
             utils.add_nvidia_dlls_to_path()
         
         inference.loadModel()

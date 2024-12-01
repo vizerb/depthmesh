@@ -24,10 +24,7 @@ class Inference():
     model = None
     ort_session = None
     
-    
     def unloadModel(self):
-        if hasattr(self, 'ort_session'):
-            del self.ort_session
         if hasattr(self, 'ort_session'):
             del self.ort_session
     

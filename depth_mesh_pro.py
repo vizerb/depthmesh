@@ -171,18 +171,18 @@ class DepthPredict(bpy.types.Operator):
         running = True
         props = context.scene.DMPprops
         # # First inference
-        if (global_vars.count == 0 and global_vars.VERSION=="CUDA"):
+        if (global_vars.count == 0 and global_vars.EXEC_PROVIDER=="CUDA"):
             utils.add_nvidia_dlls_to_path()
         
-        if not (global_vars.VERSION == "CUDA" and global_vars.OS == "LINUX"):
+        if not (global_vars.EXEC_PROVIDER == "CUDA" and global_vars.OS == "LINUX"):
             inference.loadModel()
 
         mflops = 1
-        if global_vars.VERSION == "CPU":
+        if global_vars.EXEC_PROVIDER == "CPU":
             mflops = utils.get_cpu_mflops() / 2
-        elif global_vars.VERSION == "DIRECTML":
+        elif global_vars.EXEC_PROVIDER == "DIRECTML":
             mflops = utils.get_gpu_mflops() / 8
-        elif global_vars.VERSION == "CUDA":
+        elif global_vars.EXEC_PROVIDER == "CUDA":
             mflops = utils.get_gpu_mflops() / 4
         self.duration_estimate = (global_vars.model_mflops / mflops)
         
@@ -212,13 +212,13 @@ class DepthPredict(bpy.types.Operator):
         
 
         # Inference
-        import subprocess
         self.future_output = future.Future()
         def async_inference():
             try:
-                if global_vars.OS == "LINUX" and global_vars.VERSION == "CUDA":
+                if global_vars.OS == "LINUX" and global_vars.EXEC_PROVIDER == "CUDA":
                     import os
                     import sys
+                    import subprocess
                     
                     dir = os.path.dirname(__file__)
                     script_path = os.path.join(dir, "inference_sb.py")
@@ -227,7 +227,7 @@ class DepthPredict(bpy.types.Operator):
                     extension_sp = ""
                     ver = bpy.app.version
                     searchstr = f"blender/{ver[0]}.{ver[1]}/extensions/.local/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages"
-                    for p in sys.path: 
+                    for p in sys.path:
                         if searchstr in p:
                             extension_sp = p
                             break
@@ -264,7 +264,15 @@ class DepthPredict(bpy.types.Operator):
                 try:
                     props = context.scene.DMPprops
                     props.inference_progress = 100
-                    self.depth,self.focal_length = self.future_output.result()
+                    if (global_vars.OS == "LINUX" and global_vars.EXEC_PROVIDER == "CUDA"):
+                        import pickle
+                        
+                        #print(self.future_output.result().stdout)
+                        out_dict = pickle.loads(self.future_output.result().stdout)
+                        
+                        self.depth,self.focal_length = out_dict["depth"],out_dict["focal_length"]
+                    else:
+                        self.depth,self.focal_length = self.future_output.result()
                     
                     # Set global focal_length to be used by addcamera operator also convert local one to mm as well
                     global focal_length_mm
@@ -274,6 +282,7 @@ class DepthPredict(bpy.types.Operator):
                     focal_length_mm = self.focal_length
                     
                     self.makeMesh(context)
+                    
                     props.inference_progress = 0
                 except Exception as e:
                     self.report({'ERROR'}, f"Inference failed: {e}")
@@ -308,7 +317,8 @@ class DepthPredict(bpy.types.Operator):
         
         self.applyGeoAndMaterial(obj, depth_image, (original_width, original_height))
 
-        inference.unloadModel()
+        if not (global_vars.EXEC_PROVIDER == "CUDA" and global_vars.OS == "LINUX"):
+            inference.unloadModel()
         
         self.cleanup()
 

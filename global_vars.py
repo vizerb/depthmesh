@@ -6,7 +6,7 @@ import sys
 #start = time.time()
 
 OS = sys.platform.upper()
-VERSION = 'CUDA'
+EXEC_PROVIDER = 'CUDA'
 
 model_mflops = 4370000
 count = 0

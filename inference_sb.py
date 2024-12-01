@@ -1,23 +1,3 @@
-
-def preprocess_image_old(input_image, input_size):
-    import cv2
-    import numpy as np
-    image_mean = np.array([0.5, 0.5, 0.5], dtype=np.float32)
-    image_std = np.array([0.5, 0.5, 0.5], dtype=np.float32)
-    
-    image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
-    
-    image = cv2.resize(image, input_size)  # Resize to the model's expected input size
-    
-    image = np.array(image, dtype=np.float32)
-    image /= 255.0  # Normalize to [0, 1]
-    image = (image - image_mean) / image_std
-
-    image = np.transpose(image, (2, 0, 1))  # Change data layout from HWC to CHW
-    image = np.expand_dims(image, axis=0)  # Add batch dimension
-
-    return image
-
 def preprocess_image(input_image, input_size):
     import numpy as np
     
@@ -40,7 +20,6 @@ def preprocess_image(input_image, input_size):
 
 
 import sys
-import site
 import os
 
 if len(sys.argv) < 2:
@@ -49,36 +28,15 @@ if len(sys.argv) < 2:
 input_filepath = sys.argv[1]
 
 
-#sys.path = []
-sys.path.insert(0,"C:\\Users\\vizer\\AppData\\Roaming\\Blender Foundation\\Blender\\4.3\\extensions\\.local\\lib\\python3.11\\site-packages")
-
-
-
-import importlib
-import nvidia
-nvidia_dir = os.listdir(nvidia.__path__[0])
-
-for folder in nvidia_dir:
-    if (folder.startswith("__")):
-        continue
-    module = importlib.import_module(f"nvidia.{folder}")
-    os.add_dll_directory(os.path.join(module.__path__[0],"bin"))
-
-
-# for p in sys.argv[2:-1]:
-#     if p not in sys.path:
-#         sys.path.insert(0,p)
-# extension_sp = sys.argv[2]
-# #site.addsitedir(extension_sp)
-# # Move the extension site-packages to the top of sys.path otherwise the wrong numpy version is imported
-# if extension_sp in sys.path:
-#     sys.path.remove(extension_sp)
-# sys.path.insert(0, extension_sp)
-#os.environ['PATH'] = sys.argv[-1]
-#print(f"PATH: {sys.argv[-1]}")
-
+extension_sp = sys.argv[2]
+#print(extension_sp)
+#print(sys.path[0])
+if (sys.path[0] != extension_sp):
+    #print("entered")
+    sys.path.insert(0,extension_sp)
+    pass
+#sys.path.insert(0,"/home/flare/.config/blender/4.3/extensions/.local/lib/python3.11/site-packages")
 #exit()
-
 try:
     from PIL import Image
     import numpy as np
@@ -94,21 +52,14 @@ input_size = (1536, 1536)
 model_dir = os.path.dirname(__file__)
 model_path = os.path.join(model_dir, model_file_name)
 
-    # ('CUDAExecutionProvider', {
-    #     'device_id': 0,
-    #     'arena_extend_strategy': 'kNextPowerOfTwo',    #'kNextPowerOfTwo',kSameAsRequested
-    #     'gpu_mem_limit': 5 * 1024 * 1024 * 1024,
-    #     'cudnn_conv_algo_search': 'EXHAUSTIVE',
-    #     'cudnn_conv_use_max_workspace': 0,
-    # }),
+
 providers = [
     'CUDAExecutionProvider',
     #'CPUExecutionProvider',
 ]
 
 # Only log errors
-#ort.set_default_logger_verbosity(0)
-#ort.set_default_logger_severity(0)
+ort.set_default_logger_severity(3)
 sess_options = ort.SessionOptions()
 ort_session = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
 

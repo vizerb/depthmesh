@@ -35,15 +35,14 @@ class Inference():
         model_file_name = "model.onnx"
 
         self.input_size = (1536, 1536)
-        self.input_size = (1536, 1536)
         
         model_dir = os.path.dirname(__file__)
         model_path = os.path.join(model_dir, model_file_name)
         
         providers = []
-        if global_vars.VERSION == "CUDA":
+        if global_vars.EXEC_PROVIDER == "CUDA":
             providers += "CUDAExecutionProvider"
-        elif global_vars.VERSION == "DIRECTML":
+        elif global_vars.EXEC_PROVIDER == "DIRECTML":
             providers += "DmlExecutionProvider"
             
         providers += "CPUExecutionProvider"

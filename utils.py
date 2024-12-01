@@ -1,5 +1,5 @@
 import gpu
-import global_vars
+from . import global_vars
 
 vendors = {
     "AMD": "ATI_AMD.csv",

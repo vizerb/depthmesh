@@ -5,8 +5,6 @@ import sys
 import glob
 import zipfile
 import os
-import sys
-import sys
 
 def build_wheel_command(modules, os_type, python_version="3.11"):
     cmd = "pip download "
@@ -74,9 +72,7 @@ def try_call(cmd, stage):
     print(f"\n\n{stage}\n\n")
     ret = subprocess.run(cmd, shell=True)
     print (ret.returncode)
-    if ret.returncode == 1:
-        print("Model already downloaded or error occured, skipping")
-    elif ret.returncode != 0:
+    if ret.returncode != 0:
         print(f"Error {stage}")
         sys.exit(1)
 
@@ -93,6 +89,24 @@ for arg in sys.argv:
         OS_TYPE = arg.split("=")[1]
     elif arg.startswith("ep="):
         EXEC_PROVIDER = arg.split("=")[1]
+
+
+
+##
+## Write the EXEC_PROVIDER to global_vars
+##
+with open("global_vars.py", "r") as f:
+    content = f.read()
+
+start = content.find("EXEC_PROVIDER = '") + len("EXEC_PROVIDER = '")
+end = content.find("'", start)
+
+content = content[:start] + EXEC_PROVIDER.upper() + content[end:]
+
+with open("global_vars.py", "w") as f:
+    f.write(content)
+
+
 
 ###
 ### Download wheels for the specified modules
@@ -111,9 +125,9 @@ modules = [
 ]
 
 if EXEC_PROVIDER == "cpu":
-    modules += "onnxruntime"
+    modules.append("onnxruntime")
 elif EXEC_PROVIDER == "directml":
-    modules += "onnxruntime-directml"
+    modules.append("onnxruntime-directml")
 elif EXEC_PROVIDER == "cuda":
     cuda_modules = [
         "onnxruntime-gpu",
@@ -126,7 +140,7 @@ elif EXEC_PROVIDER == "cuda":
     ]
     modules.extend(cuda_modules)
     
-    
+print(modules)
 
 cmd = build_wheel_command(modules, OS_TYPE, PYTHON_VERSION)
 try_call(cmd, "Downloading wheels")
@@ -140,8 +154,6 @@ try_call(cmd, "Downloading wheels")
 wheels = glob.glob("wheels/*.whl")
 with open("blender_manifest_base.toml", "r") as f:
     content = f.read()
-
-
 
 start = content.find("wheels = [") + len("wheels = [")
 end = content.find("]", start)

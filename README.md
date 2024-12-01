@@ -37,5 +37,5 @@ You can modify the mesh by changing the parameters in the geo nodes modifier:
 
 ## Requirements:
 
-* For CPU version: 8GB RAM and a fairly modern CPU (e.g. Intel Core i5 8400 or AMD Ryzen 2600)
 * For GPU versions: 4GB VRAM
+* For CPU version: 8GB RAM and a fairly modern 64bit CPU (e.g. Intel Core i5 8400 or AMD Ryzen 2600)

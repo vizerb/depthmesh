@@ -68,6 +68,15 @@ def download_file(url, destination):
     except Exception as e:
         print(f"Error downloading file from {url}: {str(e)}")
 
+def remove_directory(directory):
+    if os.path.exists(directory):
+        for root, dirs, files in os.walk(directory, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        os.rmdir(directory)
+
 def try_call(cmd, stage):
     print(f"\n\n{stage}\n\n")
     ret = subprocess.run(cmd, shell=True)
@@ -80,6 +89,7 @@ def try_call(cmd, stage):
 SKIP_MODEL = False  # Skip downloading the model file (its too large for ci)
 PYTHON_VERSION = "3.11"  # the version blender(4.2) uses
 OS_TYPE = "linux"  # linux, mac, windows (mac not supported yet)
+EXEC_PROVIDER = "cpu"  # cpu, directml, cuda, rocm(not yet supported)
 for arg in sys.argv:
     if arg.startswith("py="):
         PYTHON_VERSION = arg.split("=")[1]
@@ -89,7 +99,6 @@ for arg in sys.argv:
         OS_TYPE = arg.split("=")[1]
     elif arg.startswith("ep="):
         EXEC_PROVIDER = arg.split("=")[1]
-
 
 
 ##
@@ -107,15 +116,13 @@ with open("global_vars.py", "w") as f:
     f.write(content)
 
 
-
 ###
 ### Download wheels for the specified modules
 ###
-# MODULES
-# Delete old wheels folder and addon zip
-cmd = "rm -rf wheels"
-try_call(cmd, "Deleting old wheels")
+# Delete old wheels folder
+remove_directory("wheels")
 
+# MODULES
 modules = [
     "numpy",
     "opencv-python-headless",   # TODO: replace with pillow

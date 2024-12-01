@@ -39,14 +39,11 @@ class Inference():
         model_dir = os.path.dirname(__file__)
         model_path = os.path.join(model_dir, model_file_name)
         
-        providers = []
+        providers = ["CPUExecutionProvider"]
         if global_vars.EXEC_PROVIDER == "CUDA":
-            providers += "CUDAExecutionProvider"
+            providers.insert(0,"CUDAExecutionProvider")
         elif global_vars.EXEC_PROVIDER == "DIRECTML":
-            providers += "DmlExecutionProvider"
-            
-        providers += "CPUExecutionProvider"
-        
+            providers.insert(0,"DmlExecutionProvider")        
         
         # Only log errors
         ort.set_default_logger_severity(3)

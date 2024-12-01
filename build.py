@@ -140,7 +140,6 @@ elif EXEC_PROVIDER == "cuda":
     ]
     modules.extend(cuda_modules)
     
-print(modules)
 
 cmd = build_wheel_command(modules, OS_TYPE, PYTHON_VERSION)
 try_call(cmd, "Downloading wheels")

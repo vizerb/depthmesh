@@ -28,10 +28,9 @@ license = [
   "SPDX:GPL-2.0-or-later",
 ]
 # Optional: required by some licenses.
-# copyright = [
-#   "2002-2024 Developer Name",
-#   "1998 Company Name",
-# ]
+copyright = [
+  "2024 Flare"
+]
 
 # Optional list of supported platforms. If omitted, the extension will be available in all operating systems.
 platforms = ["windows-x64", "linux-x64"]

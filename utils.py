@@ -1,4 +1,5 @@
 import gpu
+import global_vars
 
 vendors = {
     "AMD": "ATI_AMD.csv",
@@ -22,12 +23,7 @@ def get_gpu_mflops():
     gpu_name_full = gpu.platform.renderer_get() # e.g. str:NVIDIA GeForce RTX 3060 Ti/PCIe/SSE2
     vendor = gpu_name_full.split(" ")[0] # e.g. str:NVIDIA
     gpu_name = gpu_name_full.split("/")[0].split(" ")[1:] # e.g. List:[GeForce,RTX,3060,Ti]
-    gpu_name_full = gpu.platform.renderer_get() # e.g. str:NVIDIA GeForce RTX 3060 Ti/PCIe/SSE2
-    vendor = gpu_name_full.split(" ")[0] # e.g. str:NVIDIA
-    gpu_name = gpu_name_full.split("/")[0].split(" ")[1:] # e.g. List:[GeForce,RTX,3060,Ti]
     
-    delim = ""
-    gpu_name = delim.join(gpu_name) # e.g. GeForceRTX3060Ti
     delim = ""
     gpu_name = delim.join(gpu_name) # e.g. GeForceRTX3060Ti
     
@@ -38,11 +34,7 @@ def get_gpu_mflops():
     
     # Filter rows by the value of their first column also convert to lower case and remove spaces
     filtered_df = df[df.apply(lambda x: x.astype(str).str.lower().str.replace(" ","") == gpu_name.lower()).any(axis=1)]
-    print(filtered_df)
-    #filtered_df = df[df.iloc[:, 0] == gpu_name]
-    # Filter rows by the value of their first column also convert to lower case and remove spaces
-    filtered_df = df[df.apply(lambda x: x.astype(str).str.lower().str.replace(" ","") == gpu_name.lower()).any(axis=1)]
-    print(filtered_df)
+    #print(filtered_df)
     #filtered_df = df[df.iloc[:, 0] == gpu_name]
     if not filtered_df.empty:
         return int(filtered_df.iloc[0, 9])
@@ -62,6 +54,10 @@ def add_nvidia_dlls_to_path():
         if (folder.startswith("__")):
             continue
         module = importlib.import_module(f"nvidia.{folder}")
-        # This one didnt work on my machine but is supposed to
-        os.add_dll_directory(os.path.join(module.__path__[0],"bin"))
-        os.environ["PATH"] = os.path.join(module.__path__[0], "bin") + os.pathsep + os.environ["PATH"]
+        
+        if global_vars.OS == "WINDOWS":
+            # This one didnt work on my machine but is supposed to
+            os.add_dll_directory(os.path.join(module.__path__[0],"bin"))
+            os.environ["PATH"] = os.path.join(module.__path__[0], "bin") + os.pathsep + os.environ["PATH"]
+        elif global_vars.OS == "LINUX":
+            os.environ["LD_LIBRARY_PATH"] = os.path.join(module.__path__[0], "lib") + os.pathsep + os.environ.get("LD_LIBRARY_PATH","")

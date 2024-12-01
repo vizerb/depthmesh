@@ -174,7 +174,8 @@ class DepthPredict(bpy.types.Operator):
         if (global_vars.count == 0 and global_vars.VERSION=="CUDA"):
             utils.add_nvidia_dlls_to_path()
         
-        inference.loadModel()
+        if not (global_vars.VERSION == "CUDA" and global_vars.OS == "LINUX"):
+            inference.loadModel()
 
         mflops = 1
         if global_vars.VERSION == "CPU":
@@ -215,7 +216,27 @@ class DepthPredict(bpy.types.Operator):
         self.future_output = future.Future()
         def async_inference():
             try:
-                output = inference.infer(self.input_image)
+                if global_vars.OS == "LINUX" and global_vars.VERSION == "CUDA":
+                    import os
+                    import sys
+                    
+                    dir = os.path.dirname(__file__)
+                    script_path = os.path.join(dir, "inference_sb.py")
+                    
+                    # Pass the extensions site-packages to the subprocess
+                    extension_sp = ""
+                    ver = bpy.app.version
+                    searchstr = f"blender/{ver[0]}.{ver[1]}/extensions/.local/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages"
+                    for p in sys.path: 
+                        if searchstr in p:
+                            extension_sp = p
+                            break
+                    
+                    args = [sys.executable, script_path, self.input_filepath, extension_sp]
+                    output = subprocess.run(args, capture_output=True)
+                else:
+                    output = inference.infer(self.input_image)
+                
                 self.future_output.add_response(output)
             except Exception as e:
                 self.future_output.set_exception(e)

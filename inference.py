@@ -24,7 +24,6 @@ class Inference():
     model = None
     ort_session = None
     
-    #cache_dir = utils.get_cache_directory()
     
     def unloadModel(self):
         if hasattr(self, 'ort_session'):

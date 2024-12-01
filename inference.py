@@ -28,6 +28,8 @@ class Inference():
     def unloadModel(self):
         if hasattr(self, 'ort_session'):
             del self.ort_session
+        if hasattr(self, 'ort_session'):
+            del self.ort_session
     
     def loadModel(self):       
         import onnxruntime as ort
@@ -35,6 +37,7 @@ class Inference():
         
         model_file_name = "model.onnx"
 
+        self.input_size = (1536, 1536)
         self.input_size = (1536, 1536)
         
         model_dir = os.path.dirname(__file__)

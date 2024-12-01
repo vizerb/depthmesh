@@ -6,6 +6,7 @@ import glob
 import zipfile
 import os
 import sys
+import sys
 
 def build_wheel_command(modules, os_type, python_version="3.11"):
     cmd = "pip download "
@@ -70,8 +71,43 @@ def download_file(url, destination):
         print(f"Error downloading file from {url}: {str(e)}")
 
 
+                    
+def progress_bar(count, total, status=''):
+    bar_length = 40
+    filled_length = int(bar_length * count / total)
+    percent = round(100.0 * count / total, 1)
+    bar = '=' * filled_length + '-' * (bar_length - filled_length)
+    sys.stdout.write(f'\r[{bar}] {percent}% {status}')
+    sys.stdout.flush()
+
+def download_file(url, destination):
+    import urllib.request
+
+    if os.path.exists(destination):
+        print(f"File {destination} already exists, skipping download.")
+        return
+
+    try:
+        response = urllib.request.urlopen(url)
+        total_size = int(response.headers['Content-Length'])
+        downloaded_size = 0
+        block_size = 8192
+        with open(destination, 'wb') as f:
+            while True:
+                buffer = response.read(block_size)
+                if not buffer:
+                    break
+                downloaded_size += len(buffer)
+                f.write(buffer)
+                progress_bar(downloaded_size, total_size, status='Downloading')
+        print(f"\nDownloaded file from {url} to {destination}.")
+    except Exception as e:
+        print(f"Error downloading file from {url}: {str(e)}")
+
+
 def build_model_command():
     #cmd = "wget -O model.onnx -nc https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_fp16.onnx?download=true"
+    cmd = "wget -O model.onnx -nc https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_q4f16.onnx?download=true"
     cmd = "wget -O model.onnx -nc https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_q4f16.onnx?download=true"
     
     return cmd
@@ -82,6 +118,7 @@ def try_call(cmd, stage):
     print (ret.returncode)
     if ret.returncode == 1:
         print("Model already downloaded or error occured, skipping")
+        print("Model already downloaded or error occured, skipping")
     elif ret.returncode != 0:
         print(f"Error {stage}")
         sys.exit(1)
@@ -89,6 +126,7 @@ def try_call(cmd, stage):
 
 SKIP_MODEL = False  # Skip downloading the model file (its too large for ci)
 PYTHON_VERSION = "3.11"  # the version blender(4.2) uses
+OS_TYPE = "linux"  # linux, mac, windows (mac not supported yet)
 OS_TYPE = "linux"  # linux, mac, windows (mac not supported yet)
 for arg in sys.argv:
     if arg.startswith("py="):
@@ -105,6 +143,7 @@ for arg in sys.argv:
 ###
 # MODULES
 # Delete old wheels folder and addon zip
+cmd = "rm -rf wheels"
 cmd = "rm -rf wheels"
 try_call(cmd, "Deleting old wheels")
 
@@ -141,6 +180,8 @@ try_call(cmd, "Downloading wheels")
 
 #try_call(cmd_linux, "Downloading linux wheels")
 #try_call(cmd_win, "Downloading windows wheels")
+#try_call(cmd_linux, "Downloading linux wheels")
+#try_call(cmd_win, "Downloading windows wheels")
 
 
 ###
@@ -153,10 +194,15 @@ with open("blender_manifest_base.toml", "r") as f:
 
 
 
+
+
+
 start = content.find("wheels = [") + len("wheels = [")
 end = content.find("]", start)
 wheels_str = "\n"
 for wheel in wheels:
+    wheel_path = wheel.replace("\\", "/")
+    wheels_str += f'\t"{wheel_path}",\n'
     wheel_path = wheel.replace("\\", "/")
     wheels_str += f'\t"{wheel_path}",\n'
 content = content[:start] + wheels_str + content[end:]
@@ -168,6 +214,10 @@ with open("blender_manifest.toml", "w") as f:
 ### Download the model if not skipped
 ###
 if not SKIP_MODEL:
+    # cmd = build_model_command()
+    # try_call(cmd, "Downloading model")
+    print("Downloading model")
+    download_file("https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_q4f16.onnx?download=true", "model.onnx")
     # cmd = build_model_command()
     # try_call(cmd, "Downloading model")
     print("Downloading model")
@@ -187,9 +237,22 @@ version = content[start:end]
 platform = OS_TYPE+"_x64"
 
 excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
+# Get the addon id and version from manifest
+
+start = content.find('id = "') + len('id = "')
+end = content.find('"', start)
+id = content[start:end]
+start = content.find('version = "') + len('version = "')
+end = content.find('"', start)
+version = content[start:end]
+platform = OS_TYPE+"_x64"
+
+excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
 excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]
 zip_name = f"{id}-{version}-{platform}.zip"
+zip_name = f"{id}-{version}-{platform}.zip"
 
+zip_directory(zip_name, excluded_dirs, excluded_patterns)
 zip_directory(zip_name, excluded_dirs, excluded_patterns)
 
 

@@ -176,9 +176,14 @@ class DepthPredict(bpy.types.Operator):
         
         inference.loadModel()
 
-        cpu_mflops = utils.get_cpu_mflops()
-        #gpu_mflops = utils.get_gpu_mflops()
-        self.duration_estimate = (global_vars.model_mflops / cpu_mflops) * 2.5
+        mflops = 1
+        if global_vars.VERSION == "CPU":
+            mflops = utils.get_cpu_mflops() / 2
+        elif global_vars.VERSION == "DIRECTML":
+            mflops = utils.get_gpu_mflops() / 8
+        elif global_vars.VERSION == "CUDA":
+            mflops = utils.get_gpu_mflops() / 4
+        self.duration_estimate = (global_vars.model_mflops / mflops)
         
         
         import cv2

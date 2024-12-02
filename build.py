@@ -125,10 +125,8 @@ remove_directory("wheels")
 # MODULES
 modules = [
     "numpy",
-    "opencv-python-headless",   # TODO: replace with pillow
     "pillow",
     "psutil",
-    "pandas",   # Could use built-in csv module and csv files
 ]
 
 if EXEC_PROVIDER == "cpu":

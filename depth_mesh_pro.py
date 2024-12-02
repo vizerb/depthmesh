@@ -56,12 +56,12 @@ class DMPPanel(bpy.types.Panel):
         # Depth mesh generation
         dp_op = layout.row()
         dp_op.enabled = not running
-        op = dp_op.operator(DepthPredict.bl_idname, text="Make depth mesh", icon='FILE_3D')
+        op = dp_op.operator(DepthPredict.bl_idname, text="Generate depth mesh", icon='FILE_3D')
         
         # Align camera operator
         addcam_row = layout.row()
         addcam_row.enabled = not running and resolution != [0,0] and focal_length_mm != 0
-        op = addcam_row.operator("dmp.align_cam", text="Align the active camera", icon='VIEW_CAMERA')
+        op = addcam_row.operator("dmp.align_cam", text="Align active camera", icon='VIEW_CAMERA')
         op.resolution = resolution
         op.focal_length = focal_length_mm
         
@@ -69,7 +69,7 @@ class DMPPanel(bpy.types.Panel):
         if (props.inference_progress > 0):
             layout.separator()
             progress_row = layout.row()
-            progress_row.progress(factor = props.inference_progress/100, type = 'BAR', text = "Inference progress")
+            progress_row.progress(factor = props.inference_progress/100, type = 'BAR', text = "Generating...")
 
 
 class DepthPredict(bpy.types.Operator):
@@ -187,7 +187,9 @@ class DepthPredict(bpy.types.Operator):
         self.duration_estimate = (global_vars.model_mflops / mflops)
         
         
-        import cv2
+        import numpy as np
+        from PIL import Image
+        
         # Getting input property
         self.input_filepath = props.inputPath
         if (self.input_filepath == ""):
@@ -200,15 +202,17 @@ class DepthPredict(bpy.types.Operator):
             self.finished(context)
             return False
         
-        # Loading image to numpy array
-        self.input_image = cv2.imread(self.input_filepath)
+        # Loading image
+        self.input_image = Image.open(self.input_filepath)
+        # self.input_image = cv2.imread(self.input_filepath)
+
         # Failed to load image
         if self.input_image is None:
             self.report({'ERROR'}, "Failed to load image")
             self.finished(context)
             return False
         global resolution
-        resolution = [self.input_image.shape[1],self.input_image.shape[0]]
+        resolution = [self.input_image.size[0], self.input_image.size[1]]
         
 
         # Inference
@@ -224,13 +228,9 @@ class DepthPredict(bpy.types.Operator):
                     script_path = os.path.join(dir, "inference_sb.py")
                     
                     # Pass the extensions site-packages to the subprocess
-                    extension_sp = ""
-                    ver = bpy.app.version
-                    searchstr = f"blender/{ver[0]}.{ver[1]}/extensions/.local/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages"
-                    for p in sys.path:
-                        if searchstr in p:
-                            extension_sp = p
-                            break
+                    extensions = bpy.utils.user_resource('EXTENSIONS')
+                    local_dir = os.path.join(extensions, ".local")
+                    extension_sp = os.path.join(local_dir, "lib", f"python{sys.version_info.major}.{sys.version_info.minor}", "site-packages")
                     
                     args = [sys.executable, script_path, self.input_filepath, extension_sp]
                     output = subprocess.run(args, capture_output=True)
@@ -296,7 +296,7 @@ class DepthPredict(bpy.types.Operator):
     def makeMesh(self, context):
         import numpy as np
         
-        original_width, original_height = self.input_image.shape[1],self.input_image.shape[0]
+        original_width, original_height = self.input_image.size[0],self.input_image.size[1]
         out_width, out_height = int(self.depth.shape[1]), int(self.depth.shape[0])
 
         
@@ -323,7 +323,7 @@ class DepthPredict(bpy.types.Operator):
         self.cleanup()
 
         global_vars.count += 1
-        self.report({'INFO'}, "Depth mesh generation complete")
+        self.report({'INFO'}, "Depth mesh generated")
         
         
 

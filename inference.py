@@ -1,16 +1,16 @@
-import numpy as np
 from . import global_vars
 
 def preprocess_image(input_image, input_size):
-    import cv2
+    import numpy as np
+    
     image_mean = np.array([0.5, 0.5, 0.5], dtype=np.float32)
     image_std = np.array([0.5, 0.5, 0.5], dtype=np.float32)
     
-    image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
+    image = input_image.convert("RGB")
     
-    image = cv2.resize(image, input_size)  # Resize to the model's expected input size
+    image = image.resize(input_size)  # Resize to the model's expected input size
     
-    image = np.array(image, dtype=np.float32)
+    image = np.array(image, dtype=np.float32)[:,:,:3]
     image /= 255.0  # Normalize to [0, 1]
     image = (image - image_mean) / image_std
 

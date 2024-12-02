@@ -18,6 +18,29 @@ def get_cpu_mflops():
 
 
 def get_gpu_mflops():
+    import os
+    import csv
+    gpu_name_full = gpu.platform.renderer_get()  # e.g. str:NVIDIA GeForce RTX 3060 Ti/PCIe/SSE2
+    vendor = gpu_name_full.split(" ")[0]  # e.g. str:NVIDIA
+    gpu_name = gpu_name_full.split("/")[0].split(" ")[1:]  # e.g. List:[GeForce,RTX,3060,Ti]
+    
+    delim = ""
+    gpu_name = delim.join(gpu_name).lower().replace(" ", "")  # e.g. geforcertx3060ti
+    
+    file_dir = os.path.dirname(__file__)
+    file_name = vendors[vendor]
+    
+    with open(os.path.join(file_dir, file_name), mode='r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            row_name = row[0].lower().replace(" ", "")
+            if row_name == gpu_name:
+                return int(row[9])
+    
+    return 1000000
+
+
+def get_gpu_mflops_old():
     import pandas as pd
     import os
     gpu_name_full = gpu.platform.renderer_get() # e.g. str:NVIDIA GeForce RTX 3060 Ti/PCIe/SSE2

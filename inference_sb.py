@@ -4,12 +4,11 @@ def preprocess_image(input_image, input_size):
     image_mean = np.array([0.5, 0.5, 0.5], dtype=np.float32)
     image_std = np.array([0.5, 0.5, 0.5], dtype=np.float32)
     
-    #image = input_image.convert("RGB")
-    image = input_image
+    image = input_image.convert("RGB")
     
     image = image.resize(input_size)  # Resize to the model's expected input size
     
-    image = np.array(image, dtype=np.float32)
+    image = np.array(image, dtype=np.float32)[:,:,:3]
     image /= 255.0  # Normalize to [0, 1]
     image = (image - image_mean) / image_std
 
@@ -27,22 +26,17 @@ if len(sys.argv) < 2:
 
 input_filepath = sys.argv[1]
 
-
 extension_sp = sys.argv[2]
-#print(extension_sp)
-#print(sys.path[0])
 if (sys.path[0] != extension_sp):
-    #print("entered")
     sys.path.insert(0,extension_sp)
-    pass
 #sys.path.insert(0,"/home/flare/.config/blender/4.3/extensions/.local/lib/python3.11/site-packages")
-#exit()
+
+
 try:
     from PIL import Image
     import numpy as np
     import onnxruntime as ort
 except ImportError as e:
-    #pass
     print(f"Failed to import required packages: {e}")
 
 model_file_name = "model.onnx"
@@ -55,7 +49,6 @@ model_path = os.path.join(model_dir, model_file_name)
 
 providers = [
     'CUDAExecutionProvider',
-    #'CPUExecutionProvider',
 ]
 
 # Only log errors

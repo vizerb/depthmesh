@@ -90,6 +90,32 @@ class DepthPredict(bpy.types.Operator):
     duration_estimate = 0
     
     
+    def async_inference(self):
+        try:
+            if global_vars.OS == "LINUX" and global_vars.EXEC_PROVIDER == "CUDA":
+                import os
+                import sys
+                import subprocess
+                
+                dir = os.path.dirname(__file__)
+                script_path = os.path.join(dir, "inference_sb.py")
+                
+                # Pass the extensions site-packages to the subprocess
+                extensions = bpy.utils.user_resource('EXTENSIONS')
+                local_dir = os.path.join(extensions, ".local")
+                extension_sp = os.path.join(local_dir, "lib", f"python{sys.version_info.major}.{sys.version_info.minor}", "site-packages")
+                
+                args = [sys.executable, script_path, self.input_filepath, extension_sp]
+                output = subprocess.run(args, capture_output=True)
+            else:
+                output = inference.infer(self.input_image)
+            
+            self.future_output.add_response(output)
+        except Exception as e:
+            self.future_output.set_exception(e)
+        finally:
+            self.future_output.set_done()
+    
     def finished(self, context):
         global running
         running = False
@@ -170,6 +196,7 @@ class DepthPredict(bpy.types.Operator):
         global running
         running = True
         props = context.scene.DMPprops
+        
         # # First inference
         if (global_vars.count == 0 and global_vars.EXEC_PROVIDER=="CUDA"):
             utils.add_nvidia_dlls_to_path()
@@ -177,13 +204,8 @@ class DepthPredict(bpy.types.Operator):
         if not (global_vars.EXEC_PROVIDER == "CUDA" and global_vars.OS == "LINUX"):
             inference.loadModel()
 
-        mflops = 1
-        if global_vars.EXEC_PROVIDER == "CPU":
-            mflops = utils.get_cpu_mflops() / 2
-        elif global_vars.EXEC_PROVIDER == "DIRECTML":
-            mflops = utils.get_gpu_mflops() / 8
-        elif global_vars.EXEC_PROVIDER == "CUDA":
-            mflops = utils.get_gpu_mflops() / 4
+        
+        mflops = utils.get_device_mflops(global_vars.EXEC_PROVIDER)
         self.duration_estimate = (global_vars.model_mflops / mflops)
         
         
@@ -204,7 +226,6 @@ class DepthPredict(bpy.types.Operator):
         
         # Loading image
         self.input_image = Image.open(self.input_filepath)
-        # self.input_image = cv2.imread(self.input_filepath)
 
         # Failed to load image
         if self.input_image is None:
@@ -217,34 +238,8 @@ class DepthPredict(bpy.types.Operator):
 
         # Inference
         self.future_output = future.Future()
-        def async_inference():
-            try:
-                if global_vars.OS == "LINUX" and global_vars.EXEC_PROVIDER == "CUDA":
-                    import os
-                    import sys
-                    import subprocess
-                    
-                    dir = os.path.dirname(__file__)
-                    script_path = os.path.join(dir, "inference_sb.py")
-                    
-                    # Pass the extensions site-packages to the subprocess
-                    extensions = bpy.utils.user_resource('EXTENSIONS')
-                    local_dir = os.path.join(extensions, ".local")
-                    extension_sp = os.path.join(local_dir, "lib", f"python{sys.version_info.major}.{sys.version_info.minor}", "site-packages")
-                    
-                    args = [sys.executable, script_path, self.input_filepath, extension_sp]
-                    output = subprocess.run(args, capture_output=True)
-                else:
-                    output = inference.infer(self.input_image)
-                
-                self.future_output.add_response(output)
-            except Exception as e:
-                self.future_output.set_exception(e)
-            finally:
-                self.future_output.set_done()
-
         # Run the async task in a separate thread
-        threading.Thread(target=async_inference).start()
+        threading.Thread(target=self.async_inference).start()
         
         return True
 
@@ -274,7 +269,7 @@ class DepthPredict(bpy.types.Operator):
                     else:
                         self.depth,self.focal_length = self.future_output.result()
                     
-                    # Set global focal_length to be used by addcamera operator also convert local one to mm as well
+                    # Convert self.focal_length to mm and set global focal_length to be used by addcamera operator
                     global focal_length_mm
                     sensor_width_mm = 36.0
                     focal_length_px = self.focal_length

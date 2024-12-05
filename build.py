@@ -6,6 +6,7 @@ import glob
 import zipfile
 import os
 
+# pip download {modules} --dest ./wheels --only-binary=:all: --python-version=3.11 --platform {platform}
 def build_wheel_command(modules, os_type, python_version="3.11"):
     cmd = "pip download "
 
@@ -14,12 +15,16 @@ def build_wheel_command(modules, os_type, python_version="3.11"):
 
     cmd += f" --dest ./wheels --only-binary=:all: --python-version={python_version}"
     
-    if os_type == "linux":
-        cmd += ""#" --platform manylinux_2_17_x86_64"
-    elif os_type == "windows":
+    if os_type == "linux_x64":
+        cmd += " --platform manylinux_2_27_x86_64 --platform manylinux_2_17_x86_64 --platform manylinux_2_12_x86_64"
+    elif os_type == "windows_x64":
         cmd += " --platform win_amd64"
+    elif os_type == "macos_arm":
+        cmd += " --platform macosx_13_0_universal2 --platform macosx_11_0_arm64"
+    elif os_type == "macos_x64":
+        cmd += " --platform macosx_13_0_universal2 --platform macosx_10_10_x86_64 --platform macosx_10_9_x86_64"
     else:
-        raise ValueError("Unsupported OS_TYPE. Supported types are 'linux' and 'windows'.")
+        raise ValueError("Unsupported OS_TYPE. Supported types are 'linux_x64', 'windows_x64', 'macos_x64' and 'macos_arm'.")
 
     return cmd
 
@@ -88,7 +93,7 @@ def try_call(cmd, stage):
 
 SKIP_MODEL = False  # Skip downloading the model file (its too large for ci)
 PYTHON_VERSION = "3.11"  # the version blender(4.2) uses
-OS_TYPE = "linux"  # linux, mac, windows (mac not supported yet)
+OS_TYPE = "linux"  # linux, mac, windows, mac(experimental)
 EXEC_PROVIDER = "cpu"  # cpu, directml, cuda, rocm(not yet supported)
 for arg in sys.argv:
     if arg.startswith("py="):
@@ -188,7 +193,7 @@ id = content[start:end]
 start = content.find('version = "') + len('version = "')
 end = content.find('"', start)
 version = content[start:end]
-platform = OS_TYPE+"_x64"
+platform = OS_TYPE
 
 excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
 excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]

@@ -27,9 +27,9 @@ if len(sys.argv) < 2:
 input_filepath = sys.argv[1]
 
 extension_sp = sys.argv[2]
-if (sys.path[0] != extension_sp):
-    sys.path.insert(0,extension_sp)
-#sys.path.insert(0,"/home/flare/.config/blender/4.3/extensions/.local/lib/python3.11/site-packages")
+#sys.path = [extension_sp]
+#if (sys.path[0] != extension_sp):
+sys.path.append(extension_sp)
 
 
 try:

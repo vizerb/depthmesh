@@ -8,7 +8,7 @@ import os
 
 # pip download {modules} --dest ./wheels --only-binary=:all: --python-version=3.11 --platform {platform}
 def build_wheel_command(modules, os_type, python_version="3.11"):
-    cmd = "pip download "
+    cmd = "pip3 download "
 
     for module in modules:
         cmd += module + " "
@@ -19,12 +19,12 @@ def build_wheel_command(modules, os_type, python_version="3.11"):
         cmd += " --platform manylinux_2_27_x86_64 --platform manylinux_2_17_x86_64 --platform manylinux_2_12_x86_64"
     elif os_type == "windows_x64":
         cmd += " --platform win_amd64"
-    elif os_type == "macos_arm":
+    elif os_type == "macos_arm64":
         cmd += " --platform macosx_13_0_universal2 --platform macosx_11_0_arm64"
     elif os_type == "macos_x64":
         cmd += " --platform macosx_13_0_universal2 --platform macosx_10_10_x86_64 --platform macosx_10_9_x86_64"
     else:
-        raise ValueError("Unsupported OS_TYPE. Supported types are 'linux_x64', 'windows_x64', 'macos_x64' and 'macos_arm'.")
+        raise ValueError("Unsupported OS_TYPE. Supported types are 'linux_x64', 'windows_x64', 'macos_x64' and 'macos_arm64'.")
 
     return cmd
 
@@ -91,116 +91,138 @@ def try_call(cmd, stage):
         sys.exit(1)
 
 
+
+def build(os_type, exec_provider="cpu", python_version="3.11"):
+    ##
+    ## Write the exec_provider to global_vars
+    ##
+    with open("global_vars.py", "r") as f:
+        content = f.read()
+
+    start = content.find("EXEC_PROVIDER = '") + len("EXEC_PROVIDER = '")
+    end = content.find("'", start)
+
+    content = content[:start] + exec_provider.upper() + content[end:]
+
+    with open("global_vars.py", "w") as f:
+        f.write(content)
+
+
+    ###
+    ### Download wheels for the specified modules
+    ###
+    # Delete old wheels folder
+    remove_directory("wheels")
+
+    # MODULES
+    modules = [
+        "numpy",
+        "pillow",
+        "psutil",
+    ]
+
+    if exec_provider == "cpu":
+        modules.append("onnxruntime")
+    elif exec_provider == "directml":
+        modules.append("onnxruntime-directml")
+    elif exec_provider == "cuda":
+        cuda_modules = [
+            "onnxruntime-gpu",
+            "nvidia-cudnn-cu12",
+            "nvidia-cuda-runtime-cu12",
+            "nvidia-cufft-cu12",
+            "nvidia-cudnn-cu12",
+            "nvidia-curand-cu12",       # Needed for linux only
+            "nvidia-cuda-nvrtc-cu12",   # Needed for linux only
+        ]
+        modules.extend(cuda_modules)
+        
+    cmd = build_wheel_command(modules, os_type, python_version)
+    try_call(cmd, "Downloading wheels")
+
+    ###
+    ### Write the wheel locations to the blender manifest file
+    ###
+    wheels = glob.glob("wheels/*.whl")
+    with open("blender_manifest_base.toml", "r") as f:
+        content = f.read()
+
+    start = content.find("wheels = [") + len("wheels = [")
+    end = content.find("]", start)
+    wheels_str = "\n"
+    for wheel in wheels:
+        wheel_path = wheel.replace("\\", "/")
+        wheels_str += f'\t"{wheel_path}",\n'
+    content = content[:start] + wheels_str + content[end:]
+
+    with open("blender_manifest.toml", "w") as f:
+        f.write(content)
+
+    ###
+    ### Download the model if not skipped
+    ###
+    if not SKIP_MODEL:
+        print("Downloading model")
+        download_file("https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_q4f16.onnx?download=true", "model.onnx")
+
+    ###
+    ### Zip the addon
+    ###
+
+    # Get the addon id and version from manifest
+    start = content.find('id = "') + len('id = "')
+    end = content.find('"', start)
+    id = content[start:end]
+    start = content.find('version = "') + len('version = "')
+    end = content.find('"', start)
+    version = content[start:end]
+    platform = os_type
+
+    excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
+    excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]
+    zip_name = f"{id}-{version}-{platform}-{exec_provider}.zip"
+
+    zip_directory(zip_name, excluded_dirs, excluded_patterns)
+
+
+
+
+
+##
+## Arguments
+##
 SKIP_MODEL = False  # Skip downloading the model file (its too large for ci)
 PYTHON_VERSION = "3.11"  # the version blender(4.2) uses
 OS_TYPE = "linux"  # linux, mac, windows, mac(experimental)
 EXEC_PROVIDER = "cpu"  # cpu, directml, cuda, rocm(not yet supported)
+BUILDALL = False
 for arg in sys.argv:
-    if arg.startswith("py="):
-        PYTHON_VERSION = arg.split("=")[1]
-    elif arg == "skip_model":
-        SKIP_MODEL = True
-    elif arg.startswith("os="):
+    if arg.startswith("os="):
         OS_TYPE = arg.split("=")[1]
     elif arg.startswith("ep="):
         EXEC_PROVIDER = arg.split("=")[1]
+    elif arg.startswith("py="):
+        PYTHON_VERSION = arg.split("=")[1]
+    elif arg == "skip_model":
+        SKIP_MODEL = True
+    elif arg == "buildall":
+        BUILDALL = True
 
 
-##
-## Write the EXEC_PROVIDER to global_vars
-##
-with open("global_vars.py", "r") as f:
-    content = f.read()
-
-start = content.find("EXEC_PROVIDER = '") + len("EXEC_PROVIDER = '")
-end = content.find("'", start)
-
-content = content[:start] + EXEC_PROVIDER.upper() + content[end:]
-
-with open("global_vars.py", "w") as f:
-    f.write(content)
-
-
-###
-### Download wheels for the specified modules
-###
-# Delete old wheels folder
-remove_directory("wheels")
-
-# MODULES
-modules = [
-    "numpy",
-    "pillow",
-    "psutil",
+build_configs = [
+    ["windows_x64","cpu"],
+    ["windows_x64","directml"],
+    ["windows_x64","cuda"],
+    ["linux_x64","cpu"],
+    ["linux_x64","cuda"],
+    ["macos_x64","cpu"],
+    ["macos_arm64","cpu"],
 ]
 
-if EXEC_PROVIDER == "cpu":
-    modules.append("onnxruntime")
-elif EXEC_PROVIDER == "directml":
-    modules.append("onnxruntime-directml")
-elif EXEC_PROVIDER == "cuda":
-    cuda_modules = [
-        "onnxruntime-gpu",
-        "nvidia-cudnn-cu12",
-        "nvidia-cuda-runtime-cu12",
-        "nvidia-cufft-cu12",
-        "nvidia-cudnn-cu12",
-        "nvidia-curand-cu12",       # Needed for linux only
-        "nvidia-cuda-nvrtc-cu12",   # Needed for linux only
-    ]
-    modules.extend(cuda_modules)
-    
-
-cmd = build_wheel_command(modules, OS_TYPE, PYTHON_VERSION)
-try_call(cmd, "Downloading wheels")
-#cmd_linux = build_wheel_command(modules, "linux", PYTHON_VERSION)
-#cmd_win = build_wheel_command(modules, "windows", PYTHON_VERSION)
-
-
-###
-### Write the wheel locations to the blender manifest file
-###
-wheels = glob.glob("wheels/*.whl")
-with open("blender_manifest_base.toml", "r") as f:
-    content = f.read()
-
-start = content.find("wheels = [") + len("wheels = [")
-end = content.find("]", start)
-wheels_str = "\n"
-for wheel in wheels:
-    wheel_path = wheel.replace("\\", "/")
-    wheels_str += f'\t"{wheel_path}",\n'
-content = content[:start] + wheels_str + content[end:]
-
-with open("blender_manifest.toml", "w") as f:
-    f.write(content)
-
-###
-### Download the model if not skipped
-###
-if not SKIP_MODEL:
-    print("Downloading model")
-    download_file("https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_q4f16.onnx?download=true", "model.onnx")
-
-###
-### Zip the addon
-###
-
-# Get the addon id and version from manifest
-start = content.find('id = "') + len('id = "')
-end = content.find('"', start)
-id = content[start:end]
-start = content.find('version = "') + len('version = "')
-end = content.find('"', start)
-version = content[start:end]
-platform = OS_TYPE
-
-excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
-excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]
-zip_name = f"{id}-{version}-{platform}.zip"
-
-zip_directory(zip_name, excluded_dirs, excluded_patterns)
-
-
+if BUILDALL:
+    for bc in build_configs:
+        build(*bc,PYTHON_VERSION)    
+else:
+    build(OS_TYPE, EXEC_PROVIDER, PYTHON_VERSION)
 
 print("\n\nDone\n\n")

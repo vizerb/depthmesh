@@ -11,8 +11,8 @@ def get_cpu_mflops():
     import psutil
     
     cpu_count = psutil.cpu_count(logical=False)
-    cpu_freq = psutil.cpu_freq()
-    cpu_mflops = cpu_count * cpu_freq.max * 4
+    cpu_freq = psutil.cpu_freq() # max can be 0 if it cant be determined
+    cpu_mflops = cpu_count * max(cpu_freq.max, cpu_freq.current) * 4
     
     return cpu_mflops
 

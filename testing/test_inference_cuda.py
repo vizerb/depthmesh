@@ -2,21 +2,22 @@ import numpy as np
 #from PIL import Image
 
 def preprocess_image(input_image, input_size):
-    import numpy as np
+    import cv2
+    image_mean=[0.5, 0.5, 0.5]
+    image_std=[0.5, 0.5, 0.5]
     
-    image_mean = np.array([0.5, 0.5, 0.5], dtype=np.float32)
-    image_std = np.array([0.5, 0.5, 0.5], dtype=np.float32)
+    image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
     
-    image = input_image.convert("RGB")
-    
-    image = image.resize(input_size)  # Resize to the model's expected input size
-    
-    image = np.array(image, dtype=np.float32)[:,:,:3]
+    image = cv2.resize(image, input_size)  # Resize to the model's expected input size
+    print(image.shape)
+    image = np.array(image).astype('float32')
     image /= 255.0  # Normalize to [0, 1]
     image = (image - image_mean) / image_std
 
     image = np.transpose(image, (2, 0, 1))  # Change data layout from HWC to CHW
     image = np.expand_dims(image, axis=0)  # Add batch dimension
+
+    image = np.array(image).astype('float32')
 
     return image
 
@@ -24,8 +25,12 @@ def preprocess_image(input_image, input_size):
 class Inference():
     model = None
     
+    #cache_dir = utils.get_cache_directory()
+    
     def loadModel(self):
-        import onnxruntime as ort    
+        import onnxruntime as ort
+       
+            
         import os
         
         model_file_name = "model.onnx"
@@ -39,7 +44,7 @@ class Inference():
         model_path = os.path.join(model_dir, model_file_name)
         
         providers = [
-            "CPUExecutionProvider",
+            "CUDAExecutionProvider",
             ]
         sess_options = ort.SessionOptions()
         self.ort_session = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
@@ -57,10 +62,10 @@ class Inference():
 
 
 def run_inference(image_path):
-    from PIL import Image
+    import cv2
 
     # Load the image
-    input_image = Image.open(image_path)
+    input_image = cv2.imread(image_path)
     if input_image is None:
         raise ValueError(f"Image at path {image_path} could not be loaded.")
 
@@ -78,5 +83,33 @@ def run_inference(image_path):
 
     #print(f"Depth map saved to {depth_map_path}")
 
+# os.add_dll_directory("C:\\dev\\projects\\depthmesh\\testing\\venv\\Lib\\site-packages\\nvidia\\cuda_runtime\\bin")
+# os.add_dll_directory("C:\\dev\\projects\\depthmesh\\testing\\venv\\Lib\\site-packages\\nvidia\\cudnn\\bin")
+# os.add_dll_directory("C:\\dev\\projects\\depthmesh\\testing\\venv\\Lib\\site-packages\\nvidia\\cufft\\bin")
+# os.add_dll_directory("C:\\dev\\projects\\depthmesh\\testing\\venv\\Lib\\site-packages\\nvidia\\cublas\\bin")
 
+import os
+import importlib
+import nvidia
+nvidia_dir = os.listdir(nvidia.__path__[0])
+
+for folder in nvidia_dir:
+    if (folder.startswith("__")):
+        continue
+    module = importlib.import_module(f"nvidia.{folder}")
+    os.add_dll_directory(os.path.join(module.__path__[0],"bin"))
+
+# os.add_dll_directory("C:\\dev\\projects\\depthmesh\\testing\\venv\\Lib\\site-packages\\nvidia\\cuda_runtime")
+# os.add_dll_directory("C:\\dev\\projects\\depthmesh\\testing\\venv\\Lib\\site-packages\\nvidia\\cudnn")
+
+import ctypes
+
+try:
+    ctypes.CDLL(r"C:\dev\projects\depthmesh\testing\venv\Lib\site-packages\onnxruntime\capi\onnxruntime_providers_cuda.dll")
+    print("DLL loaded successfully!")
+except OSError as e:
+    print(f"Failed to load DLL: {e}")
+
+#print(os.environ['PATH'])
+#exit()
 run_inference("test_img.jpg")

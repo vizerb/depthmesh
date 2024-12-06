@@ -5,17 +5,18 @@
 
 Depth Mesh Pro is a Blender add-on that creates a metrically accurate mesh from a single image.
 
-Works in Blender 4.2+
+Requires blender 4.2+
+Blender 4.2.4 and 4.3.0 (current releases as of writing) have a bug that prevents the extension from installing correctly. To work around this issue you can use older or newer versions.
 
-Supported on windows and linux
+Supported on windows, linux and mac
 
 ## Examples
 
-<img src="https://public-files.gumroad.com/hhu5t1seuqx601fpzj1pavtg5869" alt="example1 original" width="620"/> <img src="https://public-files.gumroad.com/0fhjekf7mqkjvm5w2kwjfvxcv9ii" alt="example1 result" width="620"/>
-
-<img src="https://public-files.gumroad.com/aey7nw67pudkt7guu1eq2vwpxtpk" alt="example2 original" width="620"/> <img src="https://public-files.gumroad.com/k0bg2ixulc3g1toyg8ar84milsz5" alt="example2 result" width="620"/>
+<img src="https://public-files.gumroad.com/b5dhuxll5s0h6x0xf78tp6hmtw4k" width="620"/> <img src="https://public-files.gumroad.com/ajh454am84t987qs3rq4r7lpgmct" alt="example2 result" width="620"/>
 
 <img src="https://public-files.gumroad.com/kp7s762d8iwchabbb8f4ceizt4nm" alt="example3 original" width="620"/> <img src="https://public-files.gumroad.com/ml8b5tek3e7jcaw1a94bkoizuk23" alt="example3 result" width="620"/>
+
+<img src="https://public-files.gumroad.com/ceojenxok35xza2sq4dhuikedzu9" width="620"/> <img src="https://public-files.gumroad.com/i4aybofq6nnh56hpg8o3emk457pt" alt="example1 result" width="620"/>
 
 ## Usage
 

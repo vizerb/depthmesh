@@ -1,6 +1,40 @@
 import numpy as np
 #from PIL import Image
 
+def progress_bar(count, total, status=''):
+    bar_length = 40
+    filled_length = int(bar_length * count / total)
+    percent = round(100.0 * count / total, 1)
+    bar = '=' * filled_length + '-' * (bar_length - filled_length)
+    sys.stdout.write(f'\r[{bar}] {percent}% {status}')
+    sys.stdout.flush()
+
+def download_file(url, destination):
+    import urllib.request
+
+    if os.path.exists(destination):
+        print(f"File {destination} already exists, skipping download.")
+        return
+
+    try:
+        response = urllib.request.urlopen(url)
+        total_size = int(response.headers['Content-Length'])
+        downloaded_size = 0
+        block_size = 8192
+        with open(destination, 'wb') as f:
+            while True:
+                buffer = response.read(block_size)
+                if not buffer:
+                    break
+                downloaded_size += len(buffer)
+                f.write(buffer)
+                progress_bar(downloaded_size, total_size, status='Downloading')
+        print(f"\nDownloaded file from {url} to {destination}.")
+    except Exception as e:
+        print(f"Error downloading file from {url}: {str(e)}")
+
+
+
 def preprocess_image(input_image, input_size):
     import numpy as np
     
@@ -28,7 +62,7 @@ class Inference():
         import onnxruntime as ort    
         import os
         
-        model_file_name = "model.onnx"
+        model_file_name = "model_q4f16.onnx"
 
         self.input_size = (1536, 1536)  # [H, W, C]        
         
@@ -78,5 +112,7 @@ def run_inference(image_path):
 
     #print(f"Depth map saved to {depth_map_path}")
 
+
+download_file("https://huggingface.co/onnx-community/DepthPro-ONNX/resolve/main/onnx/model_q4f16.onnx?download=true", "model_q4f16.onnx")
 
 run_inference("test_img.jpg")

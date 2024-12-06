@@ -1,4 +1,3 @@
-import gpu
 from . import global_vars
 
 vendors = {
@@ -18,8 +17,10 @@ def get_cpu_mflops():
 
 
 def get_gpu_mflops():
+    import gpu
     import os
     import csv
+    
     gpu_name_full = gpu.platform.renderer_get()  # e.g. str:NVIDIA GeForce RTX 3060 Ti/PCIe/SSE2
     vendor = gpu_name_full.split(" ")[0]  # e.g. str:NVIDIA
     gpu_name = gpu_name_full.split("/")[0].split(" ")[1:]  # e.g. List:[GeForce,RTX,3060,Ti]
@@ -37,7 +38,7 @@ def get_gpu_mflops():
             if row_name == gpu_name:
                 return int(row[9])
     
-    return 1000000
+    return 10000000
 
 
 def get_device_mflops(exec_provider):
@@ -46,7 +47,7 @@ def get_device_mflops(exec_provider):
     elif exec_provider == "DIRECTML":
         mflops = get_gpu_mflops() / 8
     elif exec_provider == "CUDA":
-        mflops = get_gpu_mflops() / 4
+        mflops = get_gpu_mflops() / 8
     else:
         raise Exception("Unsupported exec provider value")
     

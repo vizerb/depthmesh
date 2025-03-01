@@ -16,6 +16,10 @@ running = False
 focal_length_mm = 0
 resolution = [0,0]
 
+# Check for buggy blender releases
+bad_blender_version = bpy.app.version in [(4,2,4),(4,3,0)]
+    
+
 class DMPPropertyGroup(bpy.types.PropertyGroup):
     inputPath: bpy.props.StringProperty(
         subtype='FILE_PATH',
@@ -47,6 +51,16 @@ class DMPPanel(bpy.types.Panel):
         props = context.scene.DMPprops
         
         layout = self.layout
+        
+        # Bad blender version
+        if bad_blender_version:
+            layout.alert = True
+            r = layout.row()
+            r.label(text="Unsupported Blender version.")
+            r2 = layout.row()
+            r2.label(text="4.2.4 and 4.3.0 are not supported.")
+            return
+        
         
         # Input
         dp_path = layout.row()
@@ -197,7 +211,7 @@ class DepthPredict(bpy.types.Operator):
         running = True
         props = context.scene.DMPprops
         
-        # # First inference
+        # Inference init
         if (global_vars.count == 0 and global_vars.EXEC_PROVIDER=="CUDA"):
             utils.add_nvidia_dlls_to_path()
         
@@ -216,6 +230,7 @@ class DepthPredict(bpy.types.Operator):
         self.input_filepath = props.inputPath
         if (self.input_filepath == ""):
             self.report({'ERROR'}, "You did not select an input image")
+            self.finished(context)
             return False
         self.input_filepath = bpy.path.abspath(self.input_filepath)
         

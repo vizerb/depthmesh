@@ -1,5 +1,2 @@
 blender 4.2.4 LTS Stable
 blender 4.3.0 Stable
-
-Use 4.2.3 or older
-Use 4.3.1 or newer

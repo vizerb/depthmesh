@@ -173,7 +173,7 @@ def build(os_type, exec_provider="cpu", python_version="3.11"):
     start = content.find('id = "') + len('id = "')
     end = content.find('"', start)
     id = content[start:end]
-    start = content.find('version = "') + len('version = "')
+    start = content.find('\nversion = "') + len('\nversion = "')
     end = content.find('"', start)
     version = content[start:end]
     platform = os_type

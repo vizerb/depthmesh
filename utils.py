@@ -66,7 +66,6 @@ def add_nvidia_dlls_to_path():
         module = importlib.import_module(f"nvidia.{folder}")
         
         if global_vars.OS == "WIN32":
-            # This one didnt work on my machine but is supposed to
             os.add_dll_directory(os.path.join(module.__path__[0],"bin"))
             os.environ["PATH"] = os.path.join(module.__path__[0], "bin") + os.pathsep + os.environ["PATH"]
         elif global_vars.OS == "LINUX":

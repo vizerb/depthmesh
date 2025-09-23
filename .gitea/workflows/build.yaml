@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'Name of the deployment environment'
+        description: 'Deployment environment'
         required: true
         default: 'production'
 
@@ -31,13 +31,6 @@ jobs:
           python --version
           pip --version
           ls -la
-
-      # Uncomment if virtual environment setup is needed
-      # - name: Set up Python Environment
-      #   run: |
-      #     pip install virtualenv
-      #     virtualenv venv
-      #     source venv/bin/activate
 
       # Run the build script
       - name: Run Build Script

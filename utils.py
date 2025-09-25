@@ -28,7 +28,7 @@ def get_gpu_mflops():
     delim = ""
     gpu_name = delim.join(gpu_name).lower().replace(" ", "")  # e.g. geforcertx3060ti
     
-    file_dir = os.path.dirname(__file__)
+    file_dir = os.path.join(os.path.dirname(__file__),"gpudata")
     file_name = vendors[vendor]
     
     with open(os.path.join(file_dir, file_name), mode='r') as file:

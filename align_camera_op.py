@@ -24,13 +24,9 @@ class AlignCameraOperator(bpy.types.Operator):
     ) # type: ignore
 
     def execute(self, context):
-        # Set the resolution
+        # Set the render resolution
         context.scene.render.resolution_x = self.resolution[0]
         context.scene.render.resolution_y = self.resolution[1]
-        
-        # # Check if there is an active object and if it is a camera
-        # if context.object and context.object.type == 'CAMERA':
-        #     camera = context.object
         
         # Check if there is an active camera
         if context.scene.camera is not None:
@@ -42,14 +38,10 @@ class AlignCameraOperator(bpy.types.Operator):
             # Set the new camera as the active camera
             context.scene.camera = camera
         
-        # Set the camera's rotation
+        # Set the camera's rotation, location, focal length and sensor fit mode
         camera.rotation_euler = (math.radians(90.0), 0.0, 0.0)
         camera.location = (0,0,0)
-
-        # Set the focal length
         camera.data.lens = self.focal_length
-
-        # Set sensor fit mode
         camera.data.sensor_fit = 'HORIZONTAL'
         
         self.report({'INFO'}, "Camera aligned")

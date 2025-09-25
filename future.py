@@ -1,3 +1,6 @@
+# Source: https://github.com/carson-katri/dream-textures/blob/main/generator_process/future.py
+# License: GPL-3.0
+
 import threading
 from typing import Callable, Any, MutableSet
 

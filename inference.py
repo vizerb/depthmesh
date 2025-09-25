@@ -1,5 +1,3 @@
-from . import global_vars
-
 def preprocess_image(input_image, input_size):
     import numpy as np
     
@@ -23,6 +21,11 @@ def preprocess_image(input_image, input_size):
 class Inference():
     model = None
     ort_session = None
+    execution_provider = ""
+    input_size = (1536, 1536)
+    
+    def __init__(self, execution_provider):
+        self.execution_provider = execution_provider
     
     def unloadModel(self):
         if hasattr(self, 'ort_session'):
@@ -34,15 +37,13 @@ class Inference():
         
         model_file_name = "model.onnx"
 
-        self.input_size = (1536, 1536)
-        
         model_dir = os.path.dirname(__file__)
         model_path = os.path.join(model_dir, model_file_name)
         
         providers = ["CPUExecutionProvider"]
-        if global_vars.EXEC_PROVIDER == "CUDA":
+        if self.execution_provider == "CUDA":
             providers.insert(0,"CUDAExecutionProvider")
-        elif global_vars.EXEC_PROVIDER == "DIRECTML":
+        elif self.execution_provider == "DIRECTML":
             providers.insert(0,"DmlExecutionProvider")        
         
         # Only log errors

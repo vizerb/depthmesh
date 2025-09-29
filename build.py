@@ -11,7 +11,7 @@ def build_wheel_command(modules, os_type, python_version="3.11"):
     cmd = "pip3 download "
 
     for module in modules:
-        cmd += module + " "
+        cmd += f'"{module}"' + " "
 
     cmd += f" --dest ./wheels --only-binary=:all: --python-version={python_version}"
     
@@ -122,7 +122,7 @@ def build(os_type, exec_provider="cpu", python_version="3.11"):
     ]
 
     if exec_provider == "cpu":
-        modules.append("onnxruntime")
+        modules.append("onnxruntime<=1.22")
     elif exec_provider == "directml":
         modules.append("onnxruntime-directml")
     elif exec_provider == "cuda":

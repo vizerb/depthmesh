@@ -95,7 +95,7 @@ class DepthPredict(bpy.types.Operator):
     time_elapsed = 0
     duration_estimate = 0
     
-    def invoke(self, context, event):
+    def invoke(self, context, _event):
         if not self.execute(context):
             return {'CANCELLED'}
         
@@ -121,7 +121,6 @@ class DepthPredict(bpy.types.Operator):
         mflops = utils.get_device_mflops(global_vars.EXEC_PROVIDER)
         self.duration_estimate = (global_vars.model_mflops / mflops)
         
-        import numpy as np
         from PIL import Image
         
         # Getting input property
@@ -138,13 +137,18 @@ class DepthPredict(bpy.types.Operator):
             return False
         
         # Loading image
-        self.input_image = Image.open(self.input_filepath)
-
-        # Failed to load image
-        if self.input_image is None:
-            self.report({'ERROR'}, "Failed to load image")
+        # https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.open
+        try:
+            self.input_image = Image.open(self.input_filepath)
+        except Image.DecompressionBombError as e:
+            self.report({'ERROR'}, f"Image size exceeds limit of {Image.MAX_IMAGE_PIXELS*2} pixels")
             self.finished(context)
             return False
+        except Exception as e:
+            self.report({'ERROR'}, f"Failed to load image\n{e}")
+            self.finished(context)
+            return False
+    
         global resolution
         resolution = [self.input_image.size[0], self.input_image.size[1]]
 
@@ -189,11 +193,11 @@ class DepthPredict(bpy.types.Operator):
     def finished(self, context):
         global running
         running = False
-        if self.timer is not None:
-            context.window_manager.event_timer_remove(self.timer)
+        self.cleanup(context)
+        
 
     
-    def makeMesh(self, context):
+    def makeMesh(self, _context):
         import numpy as np
         
         original_width, original_height = self.input_image.size[0],self.input_image.size[1]
@@ -218,7 +222,7 @@ class DepthPredict(bpy.types.Operator):
         if not (global_vars.EXEC_PROVIDER == "CUDA" and global_vars.OS == "LINUX"):
             inference.unloadModel()
         
-        self.cleanup()
+        #self.cleanup()
 
         global_vars.count += 1
         self.report({'INFO'}, "Depth mesh generated")
@@ -316,7 +320,7 @@ class DepthPredict(bpy.types.Operator):
                     
                     props.inference_progress = 0
                 except Exception as e:
-                    self.report({'ERROR'}, f"Inference failed: {e}")
+                    self.report({'ERROR'}, f"Inference failed\n{e}")
                     
                 self.finished(context)
                 return {'FINISHED'}
@@ -324,8 +328,11 @@ class DepthPredict(bpy.types.Operator):
         return {'PASS_THROUGH'}
             
 
-    def cleanup(self):
+    def cleanup(self,context):
         # Release resources and clean up variables
+        if self.timer is not None:
+            context.window_manager.event_timer_remove(self.timer)
+            
         if self.future_output is not None:
             del self.future_output
             self.future_output = None

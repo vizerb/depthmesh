@@ -222,8 +222,6 @@ class DepthPredict(bpy.types.Operator):
         if not (global_vars.EXEC_PROVIDER == "CUDA" and global_vars.OS == "LINUX"):
             inference.unloadModel()
         
-        #self.cleanup()
-
         global_vars.count += 1
         self.report({'INFO'}, "Depth mesh generated")
     

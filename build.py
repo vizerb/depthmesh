@@ -122,12 +122,12 @@ def build(os_type, exec_provider="cpu", python_version="3.11"):
     ]
 
     if exec_provider == "cpu":
-        modules.append("onnxruntime<=1.22")
+        modules.append("onnxruntime<1.21")
     elif exec_provider == "directml":
-        modules.append("onnxruntime-directml")
+        modules.append("onnxruntime-directml<1.21")
     elif exec_provider == "cuda":
         cuda_modules = [
-            "onnxruntime-gpu",
+            "onnxruntime-gpu<1.21",
             "nvidia-cudnn-cu12",
             "nvidia-cuda-runtime-cu12",
             "nvidia-cufft-cu12",

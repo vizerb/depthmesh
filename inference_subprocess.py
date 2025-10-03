@@ -1,7 +1,23 @@
+import sys
+import traceback
+
 # Script to be called as subprocess from addon to run inference on linux
 EXEC_PROVIDER = "CUDA"
 
-import sys
+def _send_result(obj, exit_code=0):
+    try:
+        pickle.dump(obj, sys.stdout.buffer, protocol=pickle.HIGHEST_PROTOCOL)
+        sys.stdout.buffer.flush()
+    except BrokenPipeError:
+        # parent closed pipe; nothing to do
+        pass
+    except Exception:
+        print("Failed to send result to parent", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+    finally:
+        # Ensure the subprocess exits with a non-zero code on error
+        sys.exit(exit_code)
+
 
 if len(sys.argv) < 2:
     raise ValueError("Input file path not provided")
@@ -25,17 +41,25 @@ inference.loadModel()
 
 try:
     input_image = Image.open(input_filepath)
-except Image.DecompressionBombError:
-    print(f"Image size exceeds limit of {Image.MAX_IMAGE_PIXELS*2} pixels")
-    exit()
 except Exception as e:
-    print(f"Failed to load image\n{e}")
-    exit()
+    _send_result({
+        "status": "error",
+        "message": "Failed to open image",
+        "type": e.__class__.__name__,
+        "traceback": traceback.format_exc()
+    }, exit_code=4)
 
-depth, focallength_px = inference.infer(input_image)
-
-out_dict = {
-    "depth": depth,
-    "focal_length": focallength_px
-}
-pickle.dump(out_dict, sys.stdout.buffer)
+try:
+    depth, focallength_px = inference.infer(input_image)
+    _send_result({
+        "status": "ok",
+        "depth": depth,
+        "focal_length": focallength_px
+    }, exit_code=0)
+except Exception as e:
+    _send_result({
+        "status": "error",
+        "message": "Inference failed",
+        "type": e.__class__.__name__,
+        "traceback": traceback.format_exc()
+    }, exit_code=5)

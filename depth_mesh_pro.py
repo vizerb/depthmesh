@@ -136,12 +136,25 @@ class DepthPredict(bpy.types.Operator):
             self.finished(context)
             return False
         
-        # Loading image
+        # Opening image
         # https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.open
         try:
             self.input_image = Image.open(self.input_filepath)
         except Image.DecompressionBombError as e:
             self.report({'ERROR'}, f"Image size exceeds limit of {Image.MAX_IMAGE_PIXELS*2} pixels")
+            self.finished(context)
+            return False
+        except Exception as e:
+            self.report({'ERROR'}, f"Failed to open image\n{e}")
+            self.finished(context)
+            return False
+        
+        # Loading image
+        # https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.load
+        try:
+            self.input_image.load()
+        except (Image.UnidentifiedImageError, OSError) as e:
+            self.report({'ERROR'}, f"Corrupt or incomplete image: {e}")
             self.finished(context)
             return False
         except Exception as e:
@@ -302,8 +315,24 @@ class DepthPredict(bpy.types.Operator):
                     props.inference_progress = 100
                     if (global_vars.OS == "LINUX" and global_vars.EXEC_PROVIDER == "CUDA"):
                         import pickle
-                        out_dict = pickle.loads(self.future_output.result().stdout)
-                        self.depth,self.focal_length = out_dict["depth"],out_dict["focal_length"]
+
+                        raw = self.future_output.result().stdout
+                        parsed = pickle.loads(raw)
+
+                        if isinstance(parsed, dict):
+                            status = parsed.get("status")
+                            if status == "ok":
+                                self.depth = parsed["depth"]
+                                self.focal_length = parsed["focal_length"]
+                            else:
+                                msg = parsed.get("message", "Inference subprocess failed")
+                                tb = parsed.get("traceback")
+                                self.report({'ERROR'}, f"Error in subprocess: {msg}")
+                                self.finished(context)
+                                return {'CANCELLED'}
+                                #raise Exception(f"{msg}" + (f"\n{tb}" if tb else ""))
+                        else:
+                            raise Exception("Unable to decode subprocess output")                            
                     else:
                         self.depth,self.focal_length = self.future_output.result()
                     

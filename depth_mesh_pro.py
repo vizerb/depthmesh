@@ -1,6 +1,7 @@
 import bpy
 import os
 import threading
+import traceback
 
 from . import future
 from . import global_vars
@@ -146,6 +147,7 @@ class DepthPredict(bpy.types.Operator):
             return False
         except Exception as e:
             self.report({'ERROR'}, f"Failed to open image\n{e}")
+            traceback.print_exc()
             self.finished(context)
             return False
         
@@ -159,6 +161,7 @@ class DepthPredict(bpy.types.Operator):
             return False
         except Exception as e:
             self.report({'ERROR'}, f"Failed to load image\n{e}")
+            traceback.print_exc()
             self.finished(context)
             return False
     
@@ -319,20 +322,19 @@ class DepthPredict(bpy.types.Operator):
                         raw = self.future_output.result().stdout
                         parsed = pickle.loads(raw)
 
-                        if isinstance(parsed, dict):
-                            status = parsed.get("status")
-                            if status == "ok":
-                                self.depth = parsed["depth"]
-                                self.focal_length = parsed["focal_length"]
-                            else:
-                                msg = parsed.get("message", "Inference subprocess failed")
-                                tb = parsed.get("traceback")
-                                self.report({'ERROR'}, f"Error in subprocess: {msg}")
-                                self.finished(context)
-                                return {'CANCELLED'}
-                                #raise Exception(f"{msg}" + (f"\n{tb}" if tb else ""))
+                        status = parsed.get("status")
+                        if status == "ok":
+                            self.depth = parsed["depth"]
+                            self.focal_length = parsed["focal_length"]
                         else:
-                            raise Exception("Unable to decode subprocess output")                            
+                            msg = parsed.get("message", "Inference failed")
+                            tb = parsed.get("traceback")
+                            self.report({'ERROR'}, f"Error in subprocess: {msg}")
+                            # Print traceback to console for debugging
+                            print(f"{msg}" + (f"\n{tb}" if tb else ""))
+                            
+                            self.finished(context)
+                            return {'CANCELLED'}                    
                     else:
                         self.depth,self.focal_length = self.future_output.result()
                     
@@ -348,6 +350,7 @@ class DepthPredict(bpy.types.Operator):
                     props.inference_progress = 0
                 except Exception as e:
                     self.report({'ERROR'}, f"Inference failed\n{e}")
+                    traceback.print_exc()
                     
                 self.finished(context)
                 return {'FINISHED'}

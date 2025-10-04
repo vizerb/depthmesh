@@ -6,6 +6,14 @@ vendors = {
     "INTEL": "INTEL.csv",
 }
 
+def get_available_cpu_memory_gb():
+    """
+    Uses psutil to query available system memory in GB
+    """
+    import psutil
+    mem = psutil.virtual_memory()
+    return mem.available / (1024 ** 3)  # in GB
+
 def get_cpu_mflops():
     import psutil
     

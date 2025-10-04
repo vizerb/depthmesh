@@ -51,13 +51,19 @@ class Inference():
         sess_options = ort.SessionOptions()
         self.ort_session = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
         
+        
     def infer(self, input_image):
-        onnx_input = preprocess_image(input_image, self.input_size)
-        input_name = self.ort_session.get_inputs()[0].name
-        
-        outputs = self.ort_session.run(None, {input_name: onnx_input})        
-
-        depth = outputs[0].squeeze()  # Depth in [m].
-        focallength_px = outputs[1][0][0]  # Focal length in pixels.
-        
+        try:
+            onnx_input = preprocess_image(input_image, self.input_size)
+            input_name = self.ort_session.get_inputs()[0].name
+            outputs = self.ort_session.run(None, {input_name: onnx_input})
+            depth = outputs[0].squeeze()  # Depth in [m].
+            focallength_px = outputs[1][0][0]  # Focal length in pixels.
+        except Exception as e:
+            self.unloadModel()
+            if ("Failed to allocate memory" in str(e)) or ("std::bad_alloc" in str(e)):
+                raise MemoryError("Device ran out of memory while running inference")
+            else:
+                raise  # re-raise other errors
+            
         return depth,focallength_px

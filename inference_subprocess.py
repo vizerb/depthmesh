@@ -47,7 +47,7 @@ except Exception as e:
         "message": "Failed to open image",
         "type": e.__class__.__name__,
         "traceback": traceback.format_exc()
-    }, exit_code=4)
+    }, exit_code=1)
 
 try:
     depth, focallength_px = inference.infer(input_image)
@@ -56,10 +56,17 @@ try:
         "depth": depth,
         "focal_length": focallength_px
     }, exit_code=0)
+except MemoryError as e:
+    _send_result({
+        "status": "error",
+        "message": str(e),
+        "type": e.__class__.__name__,
+        "traceback": traceback.format_exc()
+    }, exit_code=1)
 except Exception as e:
     _send_result({
         "status": "error",
         "message": "Inference failed",
         "type": e.__class__.__name__,
         "traceback": traceback.format_exc()
-    }, exit_code=5)
+    }, exit_code=1)

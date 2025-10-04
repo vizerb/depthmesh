@@ -56,7 +56,6 @@ class DMPPanel(bpy.types.Panel):
             r2.label(text="4.2.4 and 4.3.0 are not supported.")
             return
         
-        
         # Input
         dp_path = layout.row()
         dp_path.prop(props, "inputPath")
@@ -146,7 +145,7 @@ class DepthPredict(bpy.types.Operator):
             self.finished(context)
             return False
         except Exception as e:
-            self.report({'ERROR'}, f"Failed to open image\n{e}")
+            self.report({'ERROR'}, f"Failed to open image: {e}")
             traceback.print_exc()
             self.finished(context)
             return False
@@ -160,13 +159,17 @@ class DepthPredict(bpy.types.Operator):
             self.finished(context)
             return False
         except Exception as e:
-            self.report({'ERROR'}, f"Failed to load image\n{e}")
+            self.report({'ERROR'}, f"Failed to load image: {e}")
             traceback.print_exc()
             self.finished(context)
             return False
     
         global resolution
         resolution = [self.input_image.size[0], self.input_image.size[1]]
+
+        # Warn if using CPU and available RAM is less than 4GB
+        if global_vars.EXEC_PROVIDER=="CPU" and utils.get_available_cpu_memory_gb()<4.0:
+            self.report({'WARNING'}, f"Low system memory, inference might fail")
 
         # Inference
         self.future_output = future.Future()
@@ -349,7 +352,7 @@ class DepthPredict(bpy.types.Operator):
                     
                     props.inference_progress = 0
                 except Exception as e:
-                    self.report({'ERROR'}, f"Inference failed\n{e}")
+                    self.report({'ERROR'}, f"Inference failed: {e}")
                     traceback.print_exc()
                     
                 self.finished(context)

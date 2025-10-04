@@ -61,7 +61,7 @@ class Inference():
             focallength_px = outputs[1][0][0]  # Focal length in pixels.
         except Exception as e:
             self.unloadModel()
-            if ("Failed to allocate memory" in str(e)) or ("std::bad_alloc" in str(e)):
+            if ("Failed to allocate memory" in str(e)) or ("std::bad_alloc" in str(e)) or ("Not enough memory" in str(e)):
                 raise MemoryError("Device ran out of memory while running inference")
             else:
                 raise  # re-raise other errors

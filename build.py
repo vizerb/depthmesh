@@ -226,7 +226,6 @@ def build(os_type, exec_provider="cpu", python_version="3.11"):
         "model.onnx",
         "blender_manifest.toml",
         "nodes.blend",
-        "README.md",
         "THIRD_PARTY_LICENSES.md"
     ]
 

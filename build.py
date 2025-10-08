@@ -203,20 +203,6 @@ def build(os_type, exec_provider="cpu", python_version="3.11"):
     version = content[start:end]
     platform = os_type
 
-    #excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
-    #excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]
-    included_patterns = [
-        "*.py", "*.txt", "*.md", "*.json"
-    ]
-    include_dirs = ["./src", "./scripts", "."]
-    included_paths = [
-        "src",
-        "gpudata",
-        "blender_manifest.toml",
-        "nodes.blend",
-        "README.md",
-        "THIRD_PARTY_LICENSES.md"
-    ]
     zip_name = f"{id}-{version}-{platform}-{exec_provider}.zip"
 
     items = [

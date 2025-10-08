@@ -29,16 +29,41 @@ def build_wheel_command(modules, os_type, python_version="3.11"):
     return cmd
 
 
-def zip_directory(zip_name, excluded_dirs, excluded_patterns):
+def zip_selected(zip_name, items):
+    """
+    Create a ZIP file that includes specific files and folders.
+
+    Parameters:
+      zip_name (str): Name of the output ZIP file.
+      items (list[Union[str, tuple[str, str]]]): 
+          Each element can be:
+            - A string: the file/folder will be added to the ZIP root.
+            - A tuple (source, dest): the source will be added under 'dest' inside the ZIP.
+    """
     with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_STORED) as zipf:
-        for root, dirs, files in os.walk('.'):
-            # Exclude directories
-            dirs[:] = [d for d in dirs if d not in excluded_dirs]
-            for file in files:
-                file_path = os.path.join(root, file)
-                # Exclude patterns
-                if not any(glob.fnmatch.fnmatch(file, pattern) for pattern in excluded_patterns):
-                    zipf.write(file_path, os.path.relpath(file_path, '.'))
+        for item in items:
+            # Handle both tuple and string inputs
+            if isinstance(item, tuple):
+                src, dest = item
+            else:
+                src, dest = item, ""  # default: put in root
+
+            if os.path.isfile(src):
+                # File → add to specified path in ZIP
+                arcname = os.path.join(dest, os.path.basename(src)) if dest else os.path.basename(src)
+                zipf.write(src, arcname)
+
+            elif os.path.isdir(src):
+                # Folder → walk through and preserve structure
+                for root, _, files in os.walk(src):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        rel_path = os.path.relpath(file_path, src)
+                        arcname = os.path.join(dest, rel_path) if dest else rel_path
+                        zipf.write(file_path, arcname)
+
+            else:
+                print(f"Skipping missing path: {src}")
 
                     
 def progress_bar(count, total, status=''):
@@ -96,7 +121,7 @@ def build(os_type, exec_provider="cpu", python_version="3.11"):
     ##
     ## Write the exec_provider to global_vars
     ##
-    with open("global_vars.py", "r") as f:
+    with open("src/global_vars.py", "r") as f:
         content = f.read()
 
     start = content.find("EXEC_PROVIDER = '") + len("EXEC_PROVIDER = '")
@@ -104,7 +129,7 @@ def build(os_type, exec_provider="cpu", python_version="3.11"):
 
     content = content[:start] + exec_provider.upper() + content[end:]
 
-    with open("global_vars.py", "w") as f:
+    with open("src/global_vars.py", "w") as f:
         f.write(content)
 
 
@@ -178,13 +203,34 @@ def build(os_type, exec_provider="cpu", python_version="3.11"):
     version = content[start:end]
     platform = os_type
 
-    excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
-    excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]
+    #excluded_dirs = ["cpu_wheels", "models", "release", "testing", ".git", ".gitea"]
+    #excluded_patterns = ["*.save", "*.zip", "*.blend1", "*.sh", ".*", "build.py"]
+    included_patterns = [
+        "*.py", "*.txt", "*.md", "*.json"
+    ]
+    include_dirs = ["./src", "./scripts", "."]
+    included_paths = [
+        "src",
+        "gpudata",
+        "blender_manifest.toml",
+        "nodes.blend",
+        "README.md",
+        "THIRD_PARTY_LICENSES.md"
+    ]
     zip_name = f"{id}-{version}-{platform}-{exec_provider}.zip"
 
-    zip_directory(zip_name, excluded_dirs, excluded_patterns)
+    items = [
+        "src",
+        ("wheels","wheels/"),
+        ("gpudata","gpudata/"),
+        "model.onnx",
+        "blender_manifest.toml",
+        "nodes.blend",
+        "README.md",
+        "THIRD_PARTY_LICENSES.md"
+    ]
 
-
+    zip_selected(zip_name, items)
 
 
 
@@ -192,7 +238,7 @@ def build(os_type, exec_provider="cpu", python_version="3.11"):
 ## Arguments
 ##
 SKIP_MODEL = False  # Skip downloading the model file (its too large for ci)
-PYTHON_VERSION = "3.11"  # the version blender(4.2) uses
+PYTHON_VERSION = "3.11"  # the version blender(4.2 - 4.5) uses
 OS_TYPE = "linux"  # linux, mac, windows, mac(experimental)
 EXEC_PROVIDER = "cpu"  # cpu, directml, cuda, rocm(not yet supported)
 BUILDALL = False

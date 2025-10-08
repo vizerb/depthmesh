@@ -1,2 +1,0 @@
-blender 4.2.4 LTS Stable
-blender 4.3.0 Stable

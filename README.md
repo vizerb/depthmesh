@@ -14,6 +14,9 @@ Supported on windows, linux and mac
 
 ## Examples
 
+Top: input image<br>
+Bottom: resulting mesh
+
 <img src="https://public-files.gumroad.com/kp7s762d8iwchabbb8f4ceizt4nm" alt="example1" width="620"/> <img src="./examples/example1.webp" alt="example1 result" width="620"/>
 
 <img src="https://public-files.gumroad.com/ceojenxok35xza2sq4dhuikedzu9" alt="example2" width="620"/> <img src="./examples/example2.webp" alt="example2 result" width="620"/>

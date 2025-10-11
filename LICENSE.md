@@ -1,4 +1,4 @@
-Copyright (c) 2025 Bence Vizer
+Copyright (c) 2025 Bence Vizer  
 All rights reserved.
 
 This software and its source code are the property of Bence Vizer.

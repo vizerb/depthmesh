@@ -2,14 +2,15 @@
 Maintained by Nathan Mayer Since 2005",,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,
 ,GPU Clockspeed*,Memory Clockspeed,Core Configuration*,GPU,Memory Size (MB),Buswidth (bits),Max Pixel Fillrate (MP/s),Max Texel Fillrate (MT/s),Max Shader Performance (MFLOPS),Max Bandwidth (MB/s),Vertex Proc.,"Max Vertices
-(in millions)",DirectX Gen,Memory Type*,Process Size,Transistors,Bus Slot,Ext. Power,"Target Market
-at Introduction","Year of
+(in millions)",DirectX Gen,Memory Type*,Process Size,Transistors,Bus Slot,Ext. Power,Price at Launch (MSRP),"Year of
 Release",Notes
-i740,66,100,1 PP; 1 TMU; 1 ROP,Auburn,4-8,64,66,66,n/a,800,0,1,DX6,"SDR,SGRAM",150nm,,AGP 1/2X,no,Budget,1997,"Texture data was stored in system RAM, accessed through the AGP bus."
-Arc A380,2000,15496(3874),1024 SP; 64 TMU; 16 ROP,ACM-G11,6144,96,32000,128000,4096000,185952,1024,128000,DX12U,GDDR6,6nm,7.2b,PCIe4.0,no,Mainstream,2022,
-Arc A580,1700,16000(4000),3072 SP; 192 TMU; 96 ROP,ACM-G10,8192,256,163200,326400,10444800,512000,3072,326400,DX12U,GDDR6,6nm,21.7b,PCIe4.0,6+8pin,Mainstream,2023,
-Arc A750,2050,16000(4000),3584 SP; 224 TMU; 96 ROP,ACM-G10,8192,256,196800,459200,14694400,512000,3584,459200,DX12U,GDDR6,6nm,21.7b,PCIe4.0,6+8pin,Upper Mainstream,2022,
-Arc A770,2100,16000(4000)-17500(4375),4096 SP; 256 TMU; 128 ROP,ACM-G10,8192-16384,256,268800,537600,17203200,560000,4096,537600,DX12U,GDDR6,6nm,21.7b,PCIe4.0,6+8pin,Highend,2022,
+i740,66,100,1 PP; 1 TMU; 1 ROP,Auburn,4-8,64,66,66,n/a,800,0,1,DX6,"SDR,SGRAM",150nm,,AGP 1/2X,no,$189/249,1997,"Texture data was stored in system RAM, accessed through the AGP bus."
+Arc A380,2000,15496(1937),1024 SP; 64 TMU; 16 ROP,ACM-G11,6144,96,32000,128000,4096000,185952,1024,128000,DX12U,GDDR6,6nm,7.2b,PCIe4.0,no,$149,2022,
+Arc A580,1700,16000(2000),3072 SP; 192 TMU; 96 ROP,ACM-G10,8192,256,163200,326400,10444800,512000,3072,326400,DX12U,GDDR6,6nm,21.7b,PCIe4.0,6+8pin,$179,2023,
+Arc A750,2050,16000(2000),3584 SP; 224 TMU; 96 ROP,ACM-G10,8192,256,196800,459200,14694400,512000,3584,459200,DX12U,GDDR6,6nm,21.7b,PCIe4.0,6+8pin,$289,2022,
+Arc A770,2100,16000(2000)-17500(2187),4096 SP; 256 TMU; 128 ROP,ACM-G10,8192-16384,256,268800,537600,17203200,560000,4096,537600,DX12U,GDDR6,6nm,21.7b,PCIe4.0,6+8pin,$329,2022,
+Arc B570,2500,19000(2375),2304 SP; 144 TMU; 80 ROP,BMG-G21,10240,160,200000,360000,11520000,380000,2304,360000,DX12U,GDDR6,5nm,19.6b,PCIe4.0,8pin,$219,2024,
+Arc B580,2670,19000(2375),2560 SP; 160 TMU; 80 ROP,BMG-G21,12228,192,213600,427200,13670400,456000,2560,427200,DX12U,GDDR6,5nm,19.6b,PCIe4.0,8pin,$249,2025,
 ,,,,,,,,,,,,,,,,,,,,,
 ,Market Tier Hierarchy: Extreme>>Enthusiast >> Highend >> Upper Mainstream >> Mainstream >> Lower Mainstream >> Upper Budget >> Budget,,,,,,,,,,,,,,,,,,,,
 ,NOTE: An (?) indicates unknown or rumored specifications.,,,,,,,,,,,,,,,,,,,,
